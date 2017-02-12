@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
+    <data-source source="LOCAL" name="PostgreSQL - flight_log@localhost" uuid="985deb7d-a7d9-42ea-a0ce-216ff25f8644">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://localhost:5432/flight_log</jdbc-url>
+    </data-source>
+    <data-source source="LOCAL" name="Flight Log v2" uuid="7c0a4265-81fb-4d87-8b1c-739e4b7fd875">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://localhost:5432/flight_log_v2</jdbc-url>
+    </data-source>
+  </component>
+</project>
