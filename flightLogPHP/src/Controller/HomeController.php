@@ -29,26 +29,42 @@ class HomeController extends AppController{
             'AppController.php',
         ];
 
+        $className = '';
+        $ignoreList2 = ['beforeFilter', 'afterFilter', 'initialize'];
+
         foreach($files as $file){
             if(!in_array($file, $ignoreList)) {
                 $controller = explode('.', $file)[0];
                 array_push($results, str_replace('Controller', '', $controller));
+
+                dump( $controller );
+
+                /* controller methods */
+                $className = 'App\\Controller\\'.$controller;
+                $class = new ReflectionClass($className);
+                $actions = $class->getMethods(ReflectionMethod::IS_PUBLIC);
+                $results2 = [$controller => []];
+
+                foreach($actions as $action){
+                    if($action->class == $className && !in_array($action->name, $ignoreList2)){
+                        array_push($results2[$controller], $action->name);
+                    }
+                }
+
+                dump( $results2 );
+
             }
         }
+
         dump( APP_DIR );
         dump( getcwd() );
         dump( $results );
 
-        $className = 'App\\Controller\\'.$controllerName.'Controller';
-        $class = new ReflectionClass($className);
-        $actions = $class->getMethods(ReflectionMethod::IS_PUBLIC);
-        $results = [$controllerName => []];
-        $ignoreList = ['beforeFilter', 'afterFilter', 'initialize'];
-        foreach($actions as $action){
-            if($action->class == $className && !in_array($action->name, $ignoreList)){
-                array_push($results[$controllerName], $action->name);
-            }
-        }
-        dump( $results );
+
+
+
+
+
+
     }
 }
