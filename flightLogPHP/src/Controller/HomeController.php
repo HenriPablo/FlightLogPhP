@@ -58,7 +58,9 @@ class HomeController extends AppController{
 
         dump( APP_DIR );
         dump( getcwd() );
-        dump( $results );
+        dump( $results2 );
+
+        $this->set('allControllers', $results2 );
 
 
 
