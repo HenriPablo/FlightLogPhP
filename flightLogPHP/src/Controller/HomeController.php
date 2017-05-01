@@ -31,7 +31,7 @@ class HomeController extends AppController{
 
         $className = '';
         $ignoreList2 = ['beforeFilter', 'afterFilter', 'initialize'];
-
+        $results2 = [];
         foreach($files as $file){
             if(!in_array($file, $ignoreList)) {
                 $controller = explode('.', $file)[0];
@@ -43,16 +43,18 @@ class HomeController extends AppController{
                 $className = 'App\\Controller\\'.$controller;
                 $class = new ReflectionClass($className);
                 $actions = $class->getMethods(ReflectionMethod::IS_PUBLIC);
-                $results2 = [$controller => []];
+
+
+                array_push( $results2[$controller][] );
+
 
                 foreach($actions as $action){
-                    if($action->class == $className && !in_array($action->name, $ignoreList2)){
+                    if($action->class == $className && !in_array($action->name, $ignoreList2))
+                    {
                         array_push($results2[$controller], $action->name);
                     }
                 }
-
-                dump( $results2 );
-
+//                dump( $results2 );
             }
         }
 
@@ -61,12 +63,6 @@ class HomeController extends AppController{
         dump( $results2 );
 
         $this->set('allControllers', $results2 );
-
-
-
-
-
-
 
     }
 }
