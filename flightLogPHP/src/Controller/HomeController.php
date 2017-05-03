@@ -30,7 +30,7 @@ class HomeController extends AppController{
         ];
 
         $className = '';
-        $ignoreList2 = ['beforeFilter', 'afterFilter', 'initialize'];
+        $ignoreList2 = ['beforeFilter', 'afterFilter', 'initialize', 'delete'];
         $results2 = [];
         foreach($files as $file){
             if(!in_array($file, $ignoreList)) {
@@ -46,7 +46,7 @@ class HomeController extends AppController{
 
 
 //                array_push( $results2[$controller][]  );
-                $results2[$controller][] = array();
+                //$results2[$controller][] = array();
 
                 foreach($actions as $action){
                     if($action->class == $className && !in_array($action->name, $ignoreList2))
