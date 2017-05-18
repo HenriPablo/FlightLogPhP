@@ -45,8 +45,8 @@ class HomeController extends AppController{
                 $actions = $class->getMethods(ReflectionMethod::IS_PUBLIC);
 
 
-//                array_push( $results2[$controller][]  );
-                //$results2[$controller][] = array();
+                array_push( $results2, $controller );
+                $results2[$controller][] = array();
 
                 foreach($actions as $action){
                     if($action->class == $className && !in_array($action->name, $ignoreList2))

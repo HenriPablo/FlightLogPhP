@@ -2,10 +2,10 @@
 <?php
 dump( $allControllers );
 
-foreach( $allController as $controller){
-    echo( "<p>". $controller . "</p>");
-    foreach( $allController as $action){
-        echo("<span>" . $action . "</span>");
+foreach( $allControllers as $key => $value ){
+    echo( "<p style='color:blue'>". $key . "</p>");
+    foreach( $value as $k=>$v){
+        echo("<span> $v </span>");
     }
 }
 ?>
