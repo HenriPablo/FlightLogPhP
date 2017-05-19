@@ -18,7 +18,15 @@ class HomeController extends AppController{
          * http://stackoverflow.com/questions/25892594/list-all-controllers-actions-in-cakephp-3
          */
         $Configure = Configure::configured();
-        dump( $Configure);
+        dump( $Configure );
+        dump( "app dir: " );
+        dump( APP_DIR );
+
+        dump( '$_SERVER[DOCUMENT_ROOT]' );
+        dump( $_SERVER['DOCUMENT_ROOT'] );
+
+        dump( '$_SERVER' );
+        dump( $_SERVER );
 
         $files = scandir(APP_DIR . '/Controller/');
         $results = [];
