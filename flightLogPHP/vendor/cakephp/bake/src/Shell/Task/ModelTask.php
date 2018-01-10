@@ -16,7 +16,7 @@ namespace Bake\Shell\Task;
 
 use Cake\Console\Shell;
 use Cake\Core\Configure;
-use Cake\Database\Schema\Table as SchemaTable;
+use Cake\Database\Schema\TableSchema;
 use Cake\Datasource\ConnectionManager;
 use Cake\ORM\Table;
 use Cake\ORM\TableRegistry;
@@ -24,6 +24,10 @@ use Cake\Utility\Inflector;
 
 /**
  * Task class for generating model files.
+ *
+ * @property \Bake\Shell\Task\FixtureTask $Fixture
+ * @property \Bake\Shell\Task\BakeTemplateTask $BakeTemplate
+ * @property \Bake\Shell\Task\TestTask $Test
  */
 class ModelTask extends BakeTask
 {
@@ -40,7 +44,6 @@ class ModelTask extends BakeTask
      * @var array
      */
     public $tasks = [
-        'Bake.DbConfig',
         'Bake.Fixture',
         'Bake.BakeTemplate',
         'Bake.Test'
@@ -110,8 +113,8 @@ class ModelTask extends BakeTask
         $data = $this->getTableContext($tableObject, $table, $name);
         $this->bakeTable($tableObject, $data);
         $this->bakeEntity($tableObject, $data);
-        $this->bakeFixture($tableObject->alias(), $tableObject->table());
-        $this->bakeTest($tableObject->alias());
+        $this->bakeFixture($tableObject->getAlias(), $tableObject->getTable());
+        $this->bakeTest($tableObject->getAlias());
     }
 
     /**
@@ -126,11 +129,12 @@ class ModelTask extends BakeTask
     {
         $associations = $this->getAssociations($tableObject);
         $this->applyAssociations($tableObject, $associations);
+        $associationInfo = $this->getAssociationInfo($tableObject);
 
         $primaryKey = $this->getPrimaryKey($tableObject);
         $displayField = $this->getDisplayField($tableObject);
         $propertySchema = $this->getEntityPropertySchema($tableObject);
-        $fields = $this->getFields();
+        $fields = $this->getFields($tableObject);
         $validation = $this->getValidation($tableObject, $associations);
         $rulesChecker = $this->getRules($tableObject, $associations);
         $behaviors = $this->getBehaviors($tableObject);
@@ -139,6 +143,7 @@ class ModelTask extends BakeTask
 
         return compact(
             'associations',
+            'associationInfo',
             'primaryKey',
             'displayField',
             'table',
@@ -175,13 +180,18 @@ class ModelTask extends BakeTask
      */
     public function getTableObject($className, $table)
     {
+        $plugin = $this->param('plugin');
+        if (!empty($plugin)) {
+            $className = $plugin . '.' . $className;
+        }
+
         if (TableRegistry::exists($className)) {
             return TableRegistry::get($className);
         }
 
         return TableRegistry::get($className, [
             'name' => $className,
-            'table' => $table,
+            'table' => $this->tablePrefix . $table,
             'connection' => ConnectionManager::get($this->connection)
         ]);
     }
@@ -207,7 +217,7 @@ class ModelTask extends BakeTask
             'belongsToMany' => []
         ];
 
-        $primary = $table->primaryKey();
+        $primary = $table->getPrimaryKey();
         $associations = $this->findBelongsTo($table, $associations);
 
         if (is_array($primary) && count($primary) > 1) {
@@ -250,6 +260,59 @@ class ModelTask extends BakeTask
     }
 
     /**
+     * Collects meta information for associations.
+     *
+     * The information returned is in the format of map, where the key is the
+     * association alias:
+     *
+     * ```
+     * [
+     *     'associationAlias' => [
+     *         'targetFqn' => '...'
+     *     ],
+     *     // ...
+     * ]
+     * ```
+     *
+     * @param \Cake\ORM\Table $table The table from which to collect association information.
+     * @return array A map of association information.
+     */
+    public function getAssociationInfo(Table $table)
+    {
+        $info = [];
+
+        $appNamespace = Configure::read('App.namespace');
+
+        foreach ($table->associations() as $association) {
+            /* @var $association \Cake\ORM\Association */
+
+            $tableClass = get_class($association->getTarget());
+            if ($tableClass === 'Cake\ORM\Table') {
+                $namespace = $appNamespace;
+
+                $className = $association->className();
+                if ($className !== null) {
+                    list($plugin, $className) = pluginSplit($className);
+                    if ($plugin !== null) {
+                        $namespace = $plugin;
+                    }
+                } else {
+                    $className = $association->getTarget()->getAlias();
+                }
+
+                $namespace = str_replace('/', '\\', trim($namespace, '\\'));
+                $tableClass = $namespace . '\Model\Table\\' . $className . 'Table';
+            }
+
+            $info[$association->getName()] = [
+                'targetFqn' => '\\' . $tableClass
+            ];
+        }
+
+        return $info;
+    }
+
+    /**
      * Find belongsTo relations and add them to the associations list.
      *
      * @param \Cake\ORM\Table $model Database\Table instance of table being generated.
@@ -258,16 +321,16 @@ class ModelTask extends BakeTask
      */
     public function findBelongsTo($model, array $associations)
     {
-        $schema = $model->schema();
+        $schema = $model->getSchema();
         foreach ($schema->columns() as $fieldName) {
-            if (!preg_match('/^.*_id$/', $fieldName)) {
+            if (!preg_match('/^.+_id$/', $fieldName) || ([$fieldName] === $schema->primaryKey())) {
                 continue;
             }
 
             if ($fieldName === 'parent_id') {
-                $className = ($this->plugin) ? $this->plugin . '.' . $model->alias() : $model->alias();
+                $className = ($this->plugin) ? $this->plugin . '.' . $model->getAlias() : $model->getAlias();
                 $assoc = [
-                    'alias' => 'Parent' . $model->alias(),
+                    'alias' => 'Parent' . $model->getAlias(),
                     'className' => $className,
                     'foreignKey' => $fieldName
                 ];
@@ -283,7 +346,7 @@ class ModelTask extends BakeTask
                     'alias' => $tmpModelName,
                     'foreignKey' => $fieldName
                 ];
-                if ($schema->column($fieldName)['null'] === false) {
+                if ($schema->getColumn($fieldName)['null'] === false) {
                     $assoc['joinType'] = 'INNER';
                 }
             }
@@ -302,24 +365,31 @@ class ModelTask extends BakeTask
      * Search tables in db for keyField; if found search key constraints
      * for the table to which it refers.
      *
-     * @param \Cake\Database\Schema\Table $schema The table schema to find a constraint for.
+     * @param \Cake\Database\Schema\TableSchema $schema The table schema to find a constraint for.
      * @param string $keyField The field to check for a constraint.
      * @return string|null Either the referenced table or null if the field has no constraints.
      */
     public function findTableReferencedBy($schema, $keyField)
     {
-        if (!$schema->column($keyField)) {
+        if (!$schema->getColumn($keyField)) {
             return null;
         }
-        foreach ($schema->constraints() as $constraint) {
-            $constraintInfo = $schema->constraint($constraint);
-            if (in_array($keyField, $constraintInfo['columns'])) {
-                if (!isset($constraintInfo['references'])) {
-                    continue;
-                }
 
-                return $constraintInfo['references'][0];
+        foreach ($schema->constraints() as $constraint) {
+            $constraintInfo = $schema->getConstraint($constraint);
+            if (!in_array($keyField, $constraintInfo['columns'])) {
+                continue;
             }
+
+            if (!isset($constraintInfo['references'])) {
+                continue;
+            }
+            $length = mb_strlen($this->tablePrefix);
+            if ($length > 0 && mb_substr($constraintInfo['references'][0], 0, $length) === $this->tablePrefix) {
+                return mb_substr($constraintInfo['references'][0], $length);
+            }
+
+            return $constraintInfo['references'][0];
         }
 
         return null;
@@ -334,7 +404,7 @@ class ModelTask extends BakeTask
      */
     public function findHasMany($model, array $associations)
     {
-        $schema = $model->schema();
+        $schema = $model->getSchema();
         $primaryKey = (array)$schema->primaryKey();
         $tableName = $schema->name();
         $foreignKey = $this->_modelKey($tableName);
@@ -342,7 +412,7 @@ class ModelTask extends BakeTask
         $tables = $this->listAll();
         foreach ($tables as $otherTableName) {
             $otherModel = $this->getTableObject($this->_camelize($otherTableName), $otherTableName);
-            $otherSchema = $otherModel->schema();
+            $otherSchema = $otherModel->getSchema();
 
             $pregTableName = preg_quote($tableName, '/');
             $pregPattern = "/^{$pregTableName}_|_{$pregTableName}$/";
@@ -357,13 +427,13 @@ class ModelTask extends BakeTask
                 $assoc = false;
                 if (!in_array($fieldName, $primaryKey) && $fieldName === $foreignKey) {
                     $assoc = [
-                        'alias' => $otherModel->alias(),
+                        'alias' => $otherModel->getAlias(),
                         'foreignKey' => $fieldName
                     ];
                 } elseif ($otherTableName === $tableName && $fieldName === 'parent_id') {
-                    $className = ($this->plugin) ? $this->plugin . '.' . $model->alias() : $model->alias();
+                    $className = ($this->plugin) ? $this->plugin . '.' . $model->getAlias() : $model->getAlias();
                     $assoc = [
-                        'alias' => 'Child' . $model->alias(),
+                        'alias' => 'Child' . $model->getAlias(),
                         'className' => $className,
                         'foreignKey' => $fieldName
                     ];
@@ -389,7 +459,7 @@ class ModelTask extends BakeTask
      */
     public function findBelongsToMany($model, array $associations)
     {
-        $schema = $model->schema();
+        $schema = $model->getSchema();
         $tableName = $schema->name();
         $foreignKey = $this->_modelKey($tableName);
 
@@ -434,7 +504,7 @@ class ModelTask extends BakeTask
             return $this->params['display-field'];
         }
 
-        return $model->displayField();
+        return $model->getDisplayField();
     }
 
     /**
@@ -451,7 +521,7 @@ class ModelTask extends BakeTask
             return array_values(array_filter(array_map('trim', $fields)));
         }
 
-        return (array)$model->primaryKey();
+        return (array)$model->getPrimaryKey();
     }
 
     /**
@@ -483,31 +553,31 @@ class ModelTask extends BakeTask
     {
         $properties = [];
 
-        $schema = $model->schema();
+        $schema = $model->getSchema();
         foreach ($schema->columns() as $column) {
             $properties[$column] = [
                 'kind' => 'column',
-                'type' => $schema->columnType($column)
+                'type' => $schema->getColumnType($column)
             ];
         }
 
         foreach ($model->associations() as $association) {
-            $entityClass = '\\' . ltrim($association->target()->entityClass(), '\\');
+            $entityClass = '\\' . ltrim($association->getTarget()->getEntityClass(), '\\');
 
             if ($entityClass === '\Cake\ORM\Entity') {
                 $namespace = Configure::read('App.namespace');
 
-                list($plugin, ) = pluginSplit($association->target()->registryAlias());
+                list($plugin, ) = pluginSplit($association->getTarget()->getRegistryAlias());
                 if ($plugin !== null) {
                     $namespace = $plugin;
                 }
                 $namespace = str_replace('/', '\\', trim($namespace, '\\'));
 
-                $entityClass = $this->_entityName($association->target()->alias());
+                $entityClass = $this->_entityName($association->getTarget()->getAlias());
                 $entityClass = '\\' . $namespace . '\Model\Entity\\' . $entityClass;
             }
 
-            $properties[$association->property()] = [
+            $properties[$association->getProperty()] = [
                 'kind' => 'association',
                 'association' => $association,
                 'type' => $entityClass
@@ -521,11 +591,16 @@ class ModelTask extends BakeTask
      * Evaluates the fields and no-fields options, and
      * returns if, and which fields should be made accessible.
      *
+     * If no fields are specified and the `no-fields` parameter is
+     * not set, then all non-primary key fields + association
+     * fields will be set as accessible.
+     *
+     * @param \Cake\ORM\Table $table The table instance to get fields for.
      * @return array|bool|null Either an array of fields, `false` in
-     * case the no-fields option is used, or `null` if none of the
-     * field options is used.
+     *   case the no-fields option is used, or `null` if none of the
+     *   field options is used.
      */
-    public function getFields()
+    public function getFields($table)
     {
         if (!empty($this->params['no-fields'])) {
             return false;
@@ -535,8 +610,14 @@ class ModelTask extends BakeTask
 
             return array_values(array_filter(array_map('trim', $fields)));
         }
+        $schema = $table->getSchema();
+        $fields = $schema->columns();
+        foreach ($table->associations() as $assoc) {
+            $fields[] = $assoc->getProperty();
+        }
+        $primaryKey = $schema->primaryKey();
 
-        return null;
+        return array_values(array_diff($fields, $primaryKey));
     }
 
     /**
@@ -557,7 +638,7 @@ class ModelTask extends BakeTask
 
             return array_values(array_filter(array_map('trim', $fields)));
         }
-        $schema = $model->schema();
+        $schema = $model->getSchema();
         $columns = $schema->columns();
         $whitelist = ['token', 'password', 'passwd'];
 
@@ -576,7 +657,7 @@ class ModelTask extends BakeTask
         if (!empty($this->params['no-validation'])) {
             return [];
         }
-        $schema = $model->schema();
+        $schema = $model->getSchema();
         $fields = $schema->columns();
         if (empty($fields)) {
             return false;
@@ -594,7 +675,7 @@ class ModelTask extends BakeTask
             if (in_array($fieldName, $foreignKeys)) {
                 continue;
             }
-            $field = $schema->column($fieldName);
+            $field = $schema->getColumn($fieldName);
             $validation = $this->fieldValidation($schema, $fieldName, $field, $primaryKey);
             if (!empty($validation)) {
                 $validate[$fieldName] = $validation;
@@ -607,65 +688,74 @@ class ModelTask extends BakeTask
     /**
      * Does individual field validation handling.
      *
-     * @param \Cake\Database\Schema\Table $schema The table schema for the current field.
+     * @param \Cake\Database\Schema\TableSchema $schema The table schema for the current field.
      * @param string $fieldName Name of field to be validated.
      * @param array $metaData metadata for field
-     * @param string $primaryKey The primary key field
+     * @param array $primaryKey The primary key field
      * @return array Array of validation for the field.
      */
     public function fieldValidation($schema, $fieldName, array $metaData, $primaryKey)
     {
-        $ignoreFields = ['created', 'modified', 'updated'];
+        $ignoreFields = ['lft', 'rght', 'created', 'modified', 'updated'];
         if (in_array($fieldName, $ignoreFields)) {
-            return false;
+            return [];
         }
 
-        $rule = false;
+        $rules = [];
         if ($fieldName === 'email') {
-            $rule = 'email';
+            $rules['email'] = [];
         } elseif ($metaData['type'] === 'uuid') {
-            $rule = 'uuid';
+            $rules['uuid'] = [];
         } elseif ($metaData['type'] === 'integer') {
-            $rule = 'integer';
+            $rules['integer'] = [];
         } elseif ($metaData['type'] === 'float') {
-            $rule = 'numeric';
+            $rules['numeric'] = [];
         } elseif ($metaData['type'] === 'decimal') {
-            $rule = 'decimal';
+            $rules['decimal'] = [];
         } elseif ($metaData['type'] === 'boolean') {
-            $rule = 'boolean';
+            $rules['boolean'] = [];
         } elseif ($metaData['type'] === 'date') {
-            $rule = 'date';
+            $rules['date'] = [];
         } elseif ($metaData['type'] === 'time') {
-            $rule = 'time';
+            $rules['time'] = [];
         } elseif ($metaData['type'] === 'datetime') {
-            $rule = 'dateTime';
+            $rules['dateTime'] = [];
         } elseif ($metaData['type'] === 'timestamp') {
-            $rule = 'dateTime';
+            $rules['dateTime'] = [];
         } elseif ($metaData['type'] === 'inet') {
-            $rule = 'ip';
+            $rules['ip'] = [];
+        } elseif ($metaData['type'] === 'string' || $metaData['type'] === 'text') {
+            $rules['scalar'] = [];
+            if ($metaData['length'] > 0) {
+                $rules['maxLength'] = [$metaData['length']];
+            }
         }
 
-        $allowEmpty = false;
-        if (in_array($fieldName, $primaryKey)) {
-            $allowEmpty = 'create';
+        if (in_array($fieldName, (array)$primaryKey)) {
+            $rules['allowEmpty'] = ["'create'"];
         } elseif ($metaData['null'] === true) {
-            $allowEmpty = true;
+            $rules['allowEmpty'] = [];
+        } else {
+            $rules['requirePresence'] = ["'create'"];
+            $rules['notEmpty'] = [];
         }
 
-        $validation = [
-            'valid' => [
+        $validation = [];
+        foreach ($rules as $rule => $args) {
+            $validation[$rule] = [
                 'rule' => $rule,
-                'allowEmpty' => $allowEmpty,
-            ]
-        ];
+                'args' => $args
+            ];
+        }
 
         foreach ($schema->constraints() as $constraint) {
-            $constraint = $schema->constraint($constraint);
+            $constraint = $schema->getConstraint($constraint);
             if (!in_array($fieldName, $constraint['columns']) || count($constraint['columns']) > 1) {
                 continue;
             }
 
-            if ($constraint['type'] === SchemaTable::CONSTRAINT_UNIQUE) {
+            $notDatetime = !in_array($metaData['type'], ['datetime', 'timestamp', 'date', 'time']);
+            if ($constraint['type'] === TableSchema::CONSTRAINT_UNIQUE && $notDatetime) {
                 $validation['unique'] = ['rule' => 'validateUnique', 'provider' => 'table'];
             }
         }
@@ -685,7 +775,7 @@ class ModelTask extends BakeTask
         if (!empty($this->params['no-rules'])) {
             return [];
         }
-        $schema = $model->schema();
+        $schema = $model->getSchema();
         $fields = $schema->columns();
         if (empty($fields)) {
             return [];
@@ -698,8 +788,8 @@ class ModelTask extends BakeTask
             }
         }
         foreach ($schema->constraints() as $name) {
-            $constraint = $schema->constraint($name);
-            if ($constraint['type'] !== SchemaTable::CONSTRAINT_UNIQUE) {
+            $constraint = $schema->getConstraint($name);
+            if ($constraint['type'] !== TableSchema::CONSTRAINT_UNIQUE) {
                 continue;
             }
             if (count($constraint['columns']) > 1) {
@@ -728,7 +818,7 @@ class ModelTask extends BakeTask
     public function getBehaviors($model)
     {
         $behaviors = [];
-        $schema = $model->schema();
+        $schema = $model->getSchema();
         $fields = $schema->columns();
         if (empty($fields)) {
             return [];
@@ -737,8 +827,8 @@ class ModelTask extends BakeTask
             $behaviors['Timestamp'] = [];
         }
 
-        if (in_array('lft', $fields) && $schema->columnType('lft') === 'integer' &&
-            in_array('rght', $fields) && $schema->columnType('rght') === 'integer' &&
+        if (in_array('lft', $fields) && $schema->getColumnType('lft') === 'integer' &&
+            in_array('rght', $fields) && $schema->getColumnType('rght') === 'integer' &&
             in_array('parent_id', $fields)
         ) {
             $behaviors['Tree'] = [];
@@ -767,13 +857,13 @@ class ModelTask extends BakeTask
             $otherModel = $this->getTableObject($this->_camelize($otherAlias), Inflector::underscore($otherAlias));
 
             try {
-                $otherSchema = $otherModel->schema();
+                $otherSchema = $otherModel->getSchema();
             } catch (\Cake\Database\Exception $e) {
                 continue;
             }
 
             $otherFields = $otherSchema->columns();
-            $alias = $model->alias();
+            $alias = $model->getAlias();
             $field = Inflector::singularize(Inflector::underscore($alias)) . '_count';
             if (in_array($field, $otherFields, true)) {
                 $counterCache[] = "'{$otherAlias}' => ['{$field}']";
@@ -795,7 +885,7 @@ class ModelTask extends BakeTask
         if (!empty($this->params['no-entity'])) {
             return null;
         }
-        $name = $this->_entityName($model->alias());
+        $name = $this->_entityName($model->getAlias());
 
         $namespace = Configure::read('App.namespace');
         $pluginPath = '';
@@ -844,8 +934,8 @@ class ModelTask extends BakeTask
             $namespace = $this->_pluginNamespace($this->plugin);
         }
 
-        $name = $model->alias();
-        $entity = $this->_entityName($model->alias());
+        $name = $model->getAlias();
+        $entity = $this->_entityName($model->getAlias());
         $data += [
             'plugin' => $this->plugin,
             'pluginPath' => $pluginPath,
@@ -937,18 +1027,14 @@ class ModelTask extends BakeTask
     {
         $db = ConnectionManager::get($this->connection);
         if (!method_exists($db, 'schemaCollection')) {
-            $this->err(
+            $this->abort(
                 'Connections need to implement schemaCollection() to be used with bake.'
             );
-
-            return $this->_stop();
         }
         $schema = $db->schemaCollection();
         $tables = $schema->listTables();
         if (empty($tables)) {
-            $this->err('Your database does not have any tables.');
-
-            return $this->_stop();
+            $this->abort('Your database does not have any tables.');
         }
         sort($tables);
 
@@ -981,10 +1067,11 @@ class ModelTask extends BakeTask
     {
         $parser = parent::getOptionParser();
 
-        $parser->description(
+        $parser->setDescription(
             'Bake table and entity classes.'
         )->addArgument('name', [
-            'help' => 'Name of the model to bake. Can use Plugin.name to bake plugin models.'
+            'help' => 'Name of the model to bake (without the Table suffix). ' .
+                'You can use Plugin.name to bake plugin models.'
         ])->addSubcommand('all', [
             'help' => 'Bake all model files with associations and validation.'
         ])->addOption('table', [
@@ -1025,7 +1112,7 @@ class ModelTask extends BakeTask
         ])->addOption('no-fixture', [
             'boolean' => true,
             'help' => 'Do not generate a test fixture skeleton.'
-        ])->epilog(
+        ])->setEpilog(
             'Omitting all arguments and options will list the table names you can generate models for'
         );
 

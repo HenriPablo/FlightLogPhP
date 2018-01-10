@@ -26,6 +26,9 @@ use DateTimeInterface;
 
 /**
  * Task class for creating and updating fixtures files.
+ *
+ * @property \Bake\Shell\Task\BakeTemplateTask $BakeTemplate
+ * @property \Bake\Shell\Task\ModelTask $Model
  */
 class FixtureTask extends BakeTask
 {
@@ -64,10 +67,11 @@ class FixtureTask extends BakeTask
     {
         $parser = parent::getOptionParser();
 
-        $parser = $parser->description(
+        $parser = $parser->setDescription(
             'Generate fixtures for use with the test suite. You can use `bake fixture all` to bake all fixtures.'
         )->addArgument('name', [
-            'help' => 'Name of the fixture to bake. Can use Plugin.name to bake plugin fixtures.'
+            'help' => 'Name of the fixture to bake (without the `Fixture` suffix). ' .
+                'You can use Plugin.name to bake plugin fixtures.'
         ])->addOption('table', [
             'help' => 'The table name if it does not follow conventions.',
         ])->addOption('count', [
@@ -129,7 +133,7 @@ class FixtureTask extends BakeTask
      */
     public function all()
     {
-        $tables = $this->Model->listUnskipped($this->connection, false);
+        $tables = $this->Model->listUnskipped();
 
         foreach ($tables as $table) {
             $this->main($table);
@@ -333,6 +337,8 @@ class FixtureTask extends BakeTask
                     case 'biginteger':
                     case 'integer':
                     case 'float':
+                    case 'smallinteger':
+                    case 'tinyinteger':
                         $insert = $i + 1;
                         break;
                     case 'string':
@@ -436,7 +442,7 @@ class FixtureTask extends BakeTask
         $records = $model->find('all')
             ->where($conditions)
             ->limit($recordCount)
-            ->hydrate(false);
+            ->enableHydration(false);
 
         return $records;
     }

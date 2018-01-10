@@ -1,16 +1,16 @@
 <?php
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         0.10.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\Utility;
 
@@ -20,7 +20,6 @@ use InvalidArgumentException;
 
 /**
  * Security Library contains utility methods related to security
- *
  */
 class Security
 {
@@ -57,7 +56,7 @@ class Security
      * @param mixed $salt If true, automatically prepends the application's salt
      *   value to $string (Security.salt).
      * @return string Hash
-     * @link http://book.cakephp.org/3.0/en/core-libraries/security.html#hashing-data
+     * @link https://book.cakephp.org/3.0/en/core-libraries/security.html#hashing-data
      */
     public static function hash($string, $type = null, $salt = false)
     {
@@ -113,6 +112,7 @@ class Security
                     E_USER_WARNING
                 );
             }
+
             return $bytes;
         }
         trigger_error(
@@ -121,6 +121,7 @@ class Security
             'Falling back to an insecure random source.',
             E_USER_WARNING
         );
+
         return static::insecureRandomBytes($length);
     }
 
@@ -151,8 +152,8 @@ class Security
      *
      * You can use this method to forcibly decide between mcrypt/openssl/custom implementations.
      *
-     * @param object|null $instance The crypto instance to use.
-     * @return object Crypto instance.
+     * @param \Cake\Utility\Crypto\OpenSsl|\Cake\Utility\Crypto\Mcrypt|null $instance The crypto instance to use.
+     * @return \Cake\Utility\Crypto\OpenSsl|\Cake\Utility\Crypto\Mcrypt Crypto instance.
      * @throws \InvalidArgumentException When no compatible crypto extension is available.
      */
     public static function engine($instance = null)
@@ -197,6 +198,7 @@ class Security
             throw new InvalidArgumentException('You must use a key larger than 32 bytes for Security::rijndael()');
         }
         $crypto = static::engine();
+
         return $crypto->rijndael($text, $key, $operation);
     }
 
@@ -226,6 +228,7 @@ class Security
         $crypto = static::engine();
         $ciphertext = $crypto->encrypt($plain, $key);
         $hmac = hash_hmac('sha256', $ciphertext, $key);
+
         return $hmac . $ciphertext;
     }
 
@@ -252,7 +255,7 @@ class Security
      * @param string $cipher The ciphertext to decrypt.
      * @param string $key The 256 bit/32 byte key to use as a cipher key.
      * @param string|null $hmacSalt The salt to use for the HMAC process. Leave null to use Security.salt.
-     * @return string Decrypted data. Any trailing null bytes will be removed.
+     * @return string|bool Decrypted data. Any trailing null bytes will be removed.
      * @throws \InvalidArgumentException On invalid data or key.
      */
     public static function decrypt($cipher, $key, $hmacSalt = null)
@@ -279,6 +282,7 @@ class Security
         }
 
         $crypto = static::engine();
+
         return $crypto->decrypt($cipher, $key);
     }
 
@@ -304,13 +308,38 @@ class Security
         for ($i = 0; $i < $hashLength; $i++) {
             $result |= (ord($hmac[$i]) ^ ord($compare[$i]));
         }
+
         return $result === 0;
+    }
+
+    /**
+     * Gets the HMAC salt to be used for encryption/decryption
+     * routines.
+     *
+     * @return string The currently configured salt
+     */
+    public static function getSalt()
+    {
+        return static::$_salt;
+    }
+
+    /**
+     * Sets the HMAC salt to be used for encryption/decryption
+     * routines.
+     *
+     * @param string $salt The salt to use for encryption routines.
+     * @return void
+     */
+    public static function setSalt($salt)
+    {
+        static::$_salt = (string)$salt;
     }
 
     /**
      * Gets or sets the HMAC salt to be used for encryption/decryption
      * routines.
      *
+     * @deprecated 3.5.0 Use getSalt()/setSalt() instead.
      * @param string|null $salt The salt to use for encryption routines. If null returns current salt.
      * @return string The currently configured salt
      */
@@ -319,6 +348,7 @@ class Security
         if ($salt === null) {
             return static::$_salt;
         }
+
         return static::$_salt = (string)$salt;
     }
 }

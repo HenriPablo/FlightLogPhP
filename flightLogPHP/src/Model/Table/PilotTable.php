@@ -34,7 +34,7 @@ class PilotTable extends Table
         parent::initialize($config);
 
         $this->table('pilot');
-        $this->displayField('id');
+        $this->displayField('last_name');
         $this->primaryKey('id');
 
         $this->hasMany('FlightPilotXref', [

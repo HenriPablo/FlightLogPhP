@@ -36,6 +36,11 @@ $cakeDescription = 'CakePHP: the rapid development php framework';
 <body>
     <nav class="top-bar expanded" data-topbar role="navigation">
         <ul class="title-area large-3 medium-4 columns">
+            <li class="name" style="float: left;">
+                <h1 style="float: left;"><a href="/" style="display: inline-block; float: left">Home</a>
+                    <span style="display: inline-block; font-weight: bold; padding: 0 1em; color: #fff; float: left">|</span>
+                </h1>
+            </li>
             <li class="name">
                 <h1><a href=""><?= $this->fetch('title') ?></a></h1>
             </li>

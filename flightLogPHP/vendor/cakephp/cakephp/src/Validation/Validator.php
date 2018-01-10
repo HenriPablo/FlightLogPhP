@@ -1,16 +1,16 @@
 <?php
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         2.2.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\Validation;
 
@@ -26,7 +26,7 @@ use IteratorAggregate;
  *
  * Implements ArrayAccess to easily modify rules in the set
  *
- * @link http://book.cakephp.org/3.0/en/core-libraries/validation.html
+ * @link https://book.cakephp.org/3.0/en/core-libraries/validation.html
  */
 class Validator implements ArrayAccess, IteratorAggregate, Countable
 {
@@ -51,6 +51,13 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
      * @var array
      */
     protected $_providers = [];
+
+    /**
+     * An associative array of objects or classes used as a default provider list
+     *
+     * @var array
+     */
+    protected static $_defaultProviders = [];
 
     /**
      * Contains the validation messages associated with checking the presence
@@ -82,6 +89,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function __construct()
     {
         $this->_useI18n = function_exists('__d');
+        $this->_providers = self::$_defaultProviders;
     }
 
     /**
@@ -155,9 +163,10 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function field($name, ValidationSet $set = null)
     {
         if (empty($this->_fields[$name])) {
-            $set = $set ?: new ValidationSet;
+            $set = $set ?: new ValidationSet();
             $this->_fields[$name] = $set;
         }
+
         return $this->_fields[$name];
     }
 
@@ -178,26 +187,95 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
      * deciding whether a validation rule can be applied. All validation methods,
      * when called will receive the full list of providers stored in this validator.
      *
+     * @param string $name The name under which the provider should be set.
+     * @param object|string $object Provider object or class name.
+     * @return $this
+     */
+    public function setProvider($name, $object)
+    {
+        $this->_providers[$name] = $object;
+
+        return $this;
+    }
+
+    /**
+     * Returns the provider stored under that name if it exists.
+     *
+     * @param string $name The name under which the provider should be set.
+     * @return object|string|null
+     */
+    public function getProvider($name)
+    {
+        if (isset($this->_providers[$name])) {
+            return $this->_providers[$name];
+        }
+        if ($name !== 'default') {
+            return null;
+        }
+
+        $this->_providers[$name] = new RulesProvider();
+
+        return $this->_providers[$name];
+    }
+
+    /**
+     * Returns the default provider stored under that name if it exists.
+     *
+     * @param string $name The name under which the provider should be retrieved.
+     * @return object|string|null
+     */
+    public static function getDefaultProvider($name)
+    {
+        if (!isset(self::$_defaultProviders[$name])) {
+            return null;
+        }
+
+        return self::$_defaultProviders[$name];
+    }
+
+    /**
+     * Associates an object to a name so it can be used as a default provider.
+     *
+     * @param string $name The name under which the provider should be set.
+     * @param object|string $object Provider object or class name.
+     * @return void
+     */
+    public static function addDefaultProvider($name, $object)
+    {
+        self::$_defaultProviders[$name] = $object;
+    }
+
+    /**
+     * Get the list of default providers.
+     *
+     * @return array
+     */
+    public static function getDefaultProviders()
+    {
+        return array_keys(self::$_defaultProviders);
+    }
+
+    /**
+     * Associates an object to a name so it can be used as a provider. Providers are
+     * objects or class names that can contain methods used during validation of for
+     * deciding whether a validation rule can be applied. All validation methods,
+     * when called will receive the full list of providers stored in this validator.
+     *
      * If called with no arguments, it will return the provider stored under that name if
      * it exists, otherwise it returns this instance of chaining.
      *
-     * @param string $name  The name under which the provider should be set.
+     * @deprecated 3.4.0 Use setProvider()/getProvider() instead.
+     * @param string $name The name under which the provider should be set.
      * @param null|object|string $object Provider object or class name.
      * @return $this|object|string|null
      */
     public function provider($name, $object = null)
     {
-        if ($object === null) {
-            if (isset($this->_providers[$name])) {
-                return $this->_providers[$name];
-            }
-            if ($name === 'default') {
-                return $this->_providers[$name] = new RulesProvider;
-            }
-            return null;
+        if ($object !== null) {
+            return $this->setProvider($name, $object);
         }
-        $this->_providers[$name] = $object;
-        return $this;
+
+        return $this->getProvider($name);
     }
 
     /**
@@ -242,7 +320,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function offsetSet($field, $rules)
     {
         if (!$rules instanceof ValidationSet) {
-            $set = new ValidationSet;
+            $set = new ValidationSet();
             foreach ((array)$rules as $name => $rule) {
                 $set->add($name, $rule);
             }
@@ -299,7 +377,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
      *      ]);
      * ```
      *
-     * @param string $field The name of the field from which the rule will be removed
+     * @param string $field The name of the field from which the rule will be added
      * @param array|string $name The alias for a single rule or multiple rules array
      * @param array|\Cake\Validation\ValidationRule $rule the rule to add
      * @return $this
@@ -346,11 +424,13 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
                 return false;
             }
             foreach ($this->providers() as $provider) {
-                $validator->provider($provider, $this->provider($provider));
+                $validator->setProvider($provider, $this->getProvider($provider));
             }
             $errors = $validator->errors($value, $context['newRecord']);
+
             return empty($errors) ? true : $errors;
         }]);
+
         return $this;
     }
 
@@ -379,7 +459,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
                 return false;
             }
             foreach ($this->providers() as $provider) {
-                $validator->provider($provider, $this->provider($provider));
+                $validator->setProvider($provider, $this->getProvider($provider));
             }
             $errors = [];
             foreach ($value as $i => $row) {
@@ -391,8 +471,10 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
                     $errors[$i] = $check;
                 }
             }
+
             return empty($errors) ? true : $errors;
         }]);
+
         return $this;
     }
 
@@ -418,30 +500,61 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
         } else {
             $this->field($field)->remove($rule);
         }
+
         return $this;
     }
 
     /**
      * Sets whether a field is required to be present in data array.
+     * You can also pass array. Using an array will let you provide the following
+     * keys:
      *
-     * @param string $field the name of the field
+     * - `mode` individual mode for field
+     * - `message` individual error message for field
+     *
+     * You can also set mode and message for all passed fields, the individual
+     * setting takes precedence over group settings.
+     *
+     * @param string|array $field the name of the field or list of fields.
      * @param bool|string|callable $mode Valid values are true, false, 'create', 'update'.
-     * If a callable is passed then the field will be required only when the callback
-     * returns true.
+     *   If a callable is passed then the field will be required only when the callback
+     *   returns true.
      * @param string|null $message The message to show if the field presence validation fails.
      * @return $this
      */
     public function requirePresence($field, $mode = true, $message = null)
     {
-        $this->field($field)->isPresenceRequired($mode);
-        if ($message) {
-            $this->_presenceMessages[$field] = $message;
+        $defaults = [
+            'mode' => $mode,
+            'message' => $message
+        ];
+
+        if (!is_array($field)) {
+            $field = $this->_convertValidatorToArray($field, $defaults);
         }
+
+        foreach ($field as $fieldName => $setting) {
+            $settings = $this->_convertValidatorToArray($fieldName, $defaults, $setting);
+            $fieldName = current(array_keys($settings));
+
+            $this->field($fieldName)->isPresenceRequired($settings[$fieldName]['mode']);
+            if ($settings[$fieldName]['message']) {
+                $this->_presenceMessages[$fieldName] = $settings[$fieldName]['message'];
+            }
+        }
+
         return $this;
     }
 
     /**
-     * Allows a field to be empty.
+     * Allows a field to be empty. You can also pass array.
+     * Using an array will let you provide the following keys:
+     *
+     * - `when` individual when condition for field
+     * - 'message' individual message for field
+     *
+     * You can also set when and message for all passed fields, the individual setting
+     * takes precedence over group settings.
      *
      * This is the opposite of notEmpty() which requires a field to not be empty.
      * By using $mode equal to 'create' or 'update', you can allow fields to be empty
@@ -450,9 +563,31 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
      * ### Example:
      *
      * ```
-     * $validator->allowEmpty('email'); // Email can be empty
-     * $validator->allowEmpty('email', 'create'); // Email can be empty on create
-     * $validator->allowEmpty('email', 'update'); // Email can be empty on update
+     * // Email can be empty
+     * $validator->allowEmpty('email');
+     *
+     * // Email can be empty on create
+     * $validator->allowEmpty('email', 'create');
+     *
+     * // Email can be empty on update
+     * $validator->allowEmpty('email', 'update');
+     *
+     * // Email and subject can be empty on update
+     * $validator->allowEmpty(['email', 'subject'], 'update');
+     *
+     * // Email can be always empty, subject and content can be empty on update.
+     * $validator->allowEmpty(
+     *      [
+     *          'email' => [
+     *              'when' => true
+     *          ],
+     *          'content' => [
+     *              'message' => 'Content cannot be empty'
+     *          ],
+     *          'subject'
+     *      ],
+     *      'update'
+     * );
      * ```
      *
      * It is possible to conditionally allow emptiness on a field by passing a callback
@@ -470,7 +605,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
      * Because this and `notEmpty()` modify the same internal state, the last
      * method called will take precedence.
      *
-     * @param string $field the name of the field
+     * @param string|array $field the name of the field or a list of fields
      * @param bool|string|callable $when Indicates when the field is allowed to be empty
      * Valid values are true (always), 'create', 'update'. If a callable is passed then
      * the field will allowed to be empty only when the callback returns true.
@@ -479,17 +614,63 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
      */
     public function allowEmpty($field, $when = true, $message = null)
     {
-        $this->field($field)->isEmptyAllowed($when);
-        if ($message) {
-            $this->_allowEmptyMessages[$field] = $message;
+        $settingsDefault = [
+            'when' => $when,
+            'message' => $message
+        ];
+
+        if (!is_array($field)) {
+            $field = $this->_convertValidatorToArray($field, $settingsDefault);
         }
+
+        foreach ($field as $fieldName => $setting) {
+            $settings = $this->_convertValidatorToArray($fieldName, $settingsDefault, $setting);
+            $fieldName = current(array_keys($settings));
+
+            $this->field($fieldName)->isEmptyAllowed($settings[$fieldName]['when']);
+            if ($settings[$fieldName]['message']) {
+                $this->_allowEmptyMessages[$fieldName] = $settings[$fieldName]['message'];
+            }
+        }
+
         return $this;
     }
 
     /**
-     * Sets a field to require a non-empty value.
+     * Converts validator to fieldName => $settings array
      *
-     * This is the opposite of allowEmpty() which allows a field to be empty.
+     * @param int|string $fieldName name of field
+     * @param array $defaults default settings
+     * @param string|array $settings settings from data
+     * @return array
+     */
+    protected function _convertValidatorToArray($fieldName, $defaults = [], $settings = [])
+    {
+        if (is_string($settings)) {
+            $fieldName = $settings;
+            $settings = [];
+        }
+        if (!is_array($settings)) {
+            throw new InvalidArgumentException(
+                sprintf('Invalid settings for "%s". Settings must be an array.', $fieldName)
+            );
+        }
+        $settings += $defaults;
+
+        return [$fieldName => $settings];
+    }
+
+    /**
+     * Sets a field to require a non-empty value. You can also pass array.
+     * Using an array will let you provide the following keys:
+     *
+     * - `when` individual when condition for field
+     * - `message` individual error message for field
+     *
+     * You can also set `when` and `message` for all passed fields, the individual setting
+     * takes precedence over group settings.
+     *
+     * This is the opposite of `allowEmpty()` which allows a field to be empty.
      * By using $mode equal to 'create' or 'update', you can make fields required
      * when records are first created, or when they are updated.
      *
@@ -497,9 +678,31 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
      *
      * ```
      * $message = 'This field cannot be empty';
-     * $validator->notEmpty('email'); // Email cannot be empty
-     * $validator->notEmpty('email', $message, 'create'); // Email can be empty on update
-     * $validator->notEmpty('email', $message, 'update'); // Email can be empty on create
+     *
+     * // Email cannot be empty
+     * $validator->notEmpty('email');
+     *
+     * // Email can be empty on update, but not create
+     * $validator->notEmpty('email', $message, 'create');
+     *
+     * // Email can be empty on create, but required on update.
+     * $validator->notEmpty('email', $message, 'update');
+     *
+     * // Email and title can be empty on create, but are required on update.
+     * $validator->notEmpty(['email', 'title'], $message, 'update');
+     *
+     * // Email can be empty on create, title must always be not empty
+     * $validator->notEmpty(
+     *      [
+     *          'email',
+     *          'title' => [
+     *              'when' => true,
+     *              'message' => 'Title cannot be empty'
+     *          ]
+     *      ],
+     *      $message,
+     *      'update'
+     * );
      * ```
      *
      * It is possible to conditionally disallow emptiness on a field by passing a callback
@@ -515,28 +718,44 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
      * Because this and `allowEmpty()` modify the same internal state, the last
      * method called will take precedence.
      *
-     * @param string $field the name of the field
+     * @param string|array $field the name of the field or list of fields
      * @param string|null $message The message to show if the field is not
-     * @param bool|string|callable $when  Indicates when the field is not allowed
-     * to be empty. Valid values are true (always), 'create', 'update'. If a
-     * callable is passed then the field will allowed be empty only when
-     * the callback returns false.
+     * @param bool|string|callable $when Indicates when the field is not allowed
+     *   to be empty. Valid values are true (always), 'create', 'update'. If a
+     *   callable is passed then the field will allowed to be empty only when
+     *   the callback returns false.
      * @return $this
      */
     public function notEmpty($field, $message = null, $when = false)
     {
-        if ($when === 'create' || $when === 'update') {
-            $when = $when === 'create' ? 'update' : 'create';
-        } elseif (is_callable($when)) {
-            $when = function ($context) use ($when) {
-                return !$when($context);
-            };
+        $defaults = [
+            'when' => $when,
+            'message' => $message
+        ];
+
+        if (!is_array($field)) {
+            $field = $this->_convertValidatorToArray($field, $defaults);
         }
 
-        $this->field($field)->isEmptyAllowed($when);
-        if ($message) {
-            $this->_allowEmptyMessages[$field] = $message;
+        foreach ($field as $fieldName => $setting) {
+            $settings = $this->_convertValidatorToArray($fieldName, $defaults, $setting);
+            $fieldName = current(array_keys($settings));
+            $whenSetting = $settings[$fieldName]['when'];
+
+            if ($whenSetting === 'create' || $whenSetting === 'update') {
+                $whenSetting = $whenSetting === 'create' ? 'update' : 'create';
+            } elseif (is_callable($whenSetting)) {
+                $whenSetting = function ($context) use ($whenSetting) {
+                    return !$whenSetting($context);
+                };
+            }
+
+            $this->field($fieldName)->isEmptyAllowed($whenSetting);
+            if ($settings[$fieldName]['message']) {
+                $this->_allowEmptyMessages[$fieldName] = $settings[$fieldName]['message'];
+            }
         }
+
         return $this;
     }
 
@@ -553,6 +772,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function notBlank($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'notBlank', $extra + [
             'rule' => 'notBlank',
         ]);
@@ -571,6 +791,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function alphaNumeric($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'alphaNumeric', $extra + [
             'rule' => 'alphaNumeric',
         ]);
@@ -593,6 +814,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
             throw new InvalidArgumentException('The $range argument requires 2 numbers');
         }
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'lengthBetween', $extra + [
             'rule' => ['lengthBetween', array_shift($range), array_shift($range)],
         ]);
@@ -613,6 +835,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function creditCard($field, $type = 'all', $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'creditCard', $extra + [
             'rule' => ['cc', $type, true],
         ]);
@@ -632,6 +855,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function greaterThan($field, $value, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'greaterThan', $extra + [
             'rule' => ['comparison', '>', $value]
         ]);
@@ -651,6 +875,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function greaterThanOrEqual($field, $value, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'greaterThanOrEqual', $extra + [
             'rule' => ['comparison', '>=', $value]
         ]);
@@ -670,6 +895,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function lessThan($field, $value, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'lessThan', $extra + [
             'rule' => ['comparison', '<', $value]
         ]);
@@ -689,6 +915,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function lessThanOrEqual($field, $value, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'lessThanOrEqual', $extra + [
             'rule' => ['comparison', '<=', $value]
         ]);
@@ -708,8 +935,9 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function equals($field, $value, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'equals', $extra + [
-            'rule' => ['comparison', '=', $value]
+            'rule' => ['comparison', '==', $value]
         ]);
     }
 
@@ -727,6 +955,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function notEquals($field, $value, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'notEquals', $extra + [
             'rule' => ['comparison', '!=', $value]
         ]);
@@ -748,6 +977,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function sameAs($field, $secondField, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'sameAs', $extra + [
             'rule' => ['compareWith', $secondField]
         ]);
@@ -767,6 +997,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function containsNonAlphaNumeric($field, $limit = 1, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'containsNonAlphaNumeric', $extra + [
             'rule' => ['containsNonAlphaNumeric', $limit]
         ]);
@@ -786,6 +1017,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function date($field, $formats = ['ymd'], $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'date', $extra + [
             'rule' => ['date', $formats]
         ]);
@@ -805,6 +1037,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function dateTime($field, $formats = ['ymd'], $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'dateTime', $extra + [
             'rule' => ['datetime', $formats]
         ]);
@@ -823,6 +1056,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function time($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'time', $extra + [
             'rule' => 'time'
         ]);
@@ -842,6 +1076,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function localizedTime($field, $type = 'datetime', $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'localizedTime', $extra + [
             'rule' => ['localizedTime', $type]
         ]);
@@ -860,6 +1095,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function boolean($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'boolean', $extra + [
             'rule' => 'boolean'
         ]);
@@ -879,6 +1115,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function decimal($field, $places = null, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'decimal', $extra + [
             'rule' => ['decimal', $places]
         ]);
@@ -898,6 +1135,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function email($field, $checkMX = false, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'email', $extra + [
             'rule' => ['email', $checkMX]
         ]);
@@ -918,6 +1156,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function ip($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'ip', $extra + [
             'rule' => 'ip'
         ]);
@@ -936,6 +1175,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function ipv4($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'ipv4', $extra + [
             'rule' => ['ip', 'ipv4']
         ]);
@@ -954,6 +1194,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function ipv6($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'ipv6', $extra + [
             'rule' => ['ip', 'ipv6']
         ]);
@@ -973,8 +1214,29 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function minLength($field, $min, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'minLength', $extra + [
             'rule' => ['minLength', $min]
+        ]);
+    }
+
+    /**
+     * Add a string length validation rule to a field.
+     *
+     * @param string $field The field you want to apply the rule to.
+     * @param int $min The minimum length required.
+     * @param string|null $message The error message when the rule fails.
+     * @param string|callable|null $when Either 'create' or 'update' or a callable that returns
+     *   true when the validation rule should be applied.
+     * @see \Cake\Validation\Validation::minLengthBytes()
+     * @return $this
+     */
+    public function minLengthBytes($field, $min, $message = null, $when = null)
+    {
+        $extra = array_filter(['on' => $when, 'message' => $message]);
+
+        return $this->add($field, 'minLengthBytes', $extra + [
+            'rule' => ['minLengthBytes', $min]
         ]);
     }
 
@@ -992,8 +1254,29 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function maxLength($field, $max, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'maxLength', $extra + [
             'rule' => ['maxLength', $max]
+        ]);
+    }
+
+    /**
+     * Add a string length validation rule to a field.
+     *
+     * @param string $field The field you want to apply the rule to.
+     * @param int $max The maximum length allowed.
+     * @param string|null $message The error message when the rule fails.
+     * @param string|callable|null $when Either 'create' or 'update' or a callable that returns
+     *   true when the validation rule should be applied.
+     * @see \Cake\Validation\Validation::maxLengthBytes()
+     * @return $this
+     */
+    public function maxLengthBytes($field, $max, $message = null, $when = null)
+    {
+        $extra = array_filter(['on' => $when, 'message' => $message]);
+
+        return $this->add($field, 'maxLengthBytes', $extra + [
+            'rule' => ['maxLengthBytes', $max]
         ]);
     }
 
@@ -1010,6 +1293,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function numeric($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'numeric', $extra + [
             'rule' => 'numeric'
         ]);
@@ -1028,6 +1312,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function naturalNumber($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'naturalNumber', $extra + [
             'rule' => ['naturalNumber', false]
         ]);
@@ -1046,6 +1331,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function nonNegativeInteger($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'nonNegativeInteger', $extra + [
             'rule' => ['naturalNumber', true]
         ]);
@@ -1068,6 +1354,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
             throw new InvalidArgumentException('The $range argument requires 2 numbers');
         }
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'range', $extra + [
             'rule' => ['range', array_shift($range), array_shift($range)]
         ]);
@@ -1088,6 +1375,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function url($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'url', $extra + [
             'rule' => ['url', false]
         ]);
@@ -1108,6 +1396,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function urlWithProtocol($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'urlWithProtocol', $extra + [
             'rule' => ['url', true]
         ]);
@@ -1127,6 +1416,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function inList($field, array $list, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'inList', $extra + [
             'rule' => ['inList', $list]
         ]);
@@ -1145,6 +1435,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function uuid($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'uuid', $extra + [
             'rule' => 'uuid'
         ]);
@@ -1166,6 +1457,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function uploadedFile($field, array $options, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'uploadedFile', $extra + [
             'rule' => ['uploadedFile', $options]
         ]);
@@ -1186,6 +1478,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function latLong($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'latLong', $extra + [
             'rule' => 'geoCoordinate'
         ]);
@@ -1204,6 +1497,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function latitude($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'latitude', $extra + [
             'rule' => 'latitude'
         ]);
@@ -1222,6 +1516,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function longitude($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'longitude', $extra + [
             'rule' => 'longitude'
         ]);
@@ -1240,6 +1535,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function ascii($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'ascii', $extra + [
             'rule' => 'ascii'
         ]);
@@ -1258,6 +1554,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function utf8($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'utf8', $extra + [
             'rule' => ['utf8', ['extended' => false]]
         ]);
@@ -1278,6 +1575,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function utf8Extended($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'utf8Extended', $extra + [
             'rule' => ['utf8', ['extended' => true]]
         ]);
@@ -1296,6 +1594,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function integer($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'integer', $extra + [
             'rule' => 'isInteger'
         ]);
@@ -1308,14 +1607,54 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
      * @param string|null $message The error message when the rule fails.
      * @param string|callable|null $when Either 'create' or 'update' or a callable that returns
      *   true when the validation rule should be applied.
+     * @see \Cake\Validation\Validation::isArray()
      * @return $this
      */
     public function isArray($field, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'isArray', $extra + [
                 'rule' => 'isArray'
             ]);
+    }
+
+    /**
+     * Add a validation rule to ensure that a field contains a scalar.
+     *
+     * @param string $field The field you want to apply the rule to.
+     * @param string|null $message The error message when the rule fails.
+     * @param string|callable|null $when Either 'create' or 'update' or a callable that returns
+     *   true when the validation rule should be applied.
+     * @see \Cake\Validation\Validation::isScalar()
+     * @return $this
+     */
+    public function scalar($field, $message = null, $when = null)
+    {
+        $extra = array_filter(['on' => $when, 'message' => $message]);
+
+        return $this->add($field, 'scalar', $extra + [
+                'rule' => 'isScalar'
+            ]);
+    }
+
+    /**
+     * Add a validation rule to ensure a field is a 6 digits hex color value.
+     *
+     * @param string $field The field you want to apply the rule to.
+     * @param string|null $message The error message when the rule fails.
+     * @param string|callable|null $when Either 'create' or 'update' or a callable that returns
+     *   true when the validation rule should be applied.
+     * @see \Cake\Validation\Validation::hexColor()
+     * @return $this
+     */
+    public function hexColor($field, $message = null, $when = null)
+    {
+        $extra = array_filter(['on' => $when, 'message' => $message]);
+
+        return $this->add($field, 'hexColor', $extra + [
+            'rule' => 'hexColor',
+        ]);
     }
 
     /**
@@ -1333,8 +1672,9 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function multipleOptions($field, array $options = [], $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
-        $caseInsensitive = isset($options['caseInsenstive']) ? $options['caseInsensitive'] : false;
+        $caseInsensitive = isset($options['caseInsensitive']) ? $options['caseInsensitive'] : false;
         unset($options['caseInsensitive']);
+
         return $this->add($field, 'multipleOptions', $extra + [
             'rule' => ['multiple', $options, $caseInsensitive]
         ]);
@@ -1355,11 +1695,13 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function hasAtLeast($field, $count, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'hasAtLeast', $extra + [
             'rule' => function ($value) use ($count) {
                 if (is_array($value) && isset($value['_ids'])) {
                     $value = $value['_ids'];
                 }
+
                 return Validation::numElements($value, '>=', $count);
             }
         ]);
@@ -1370,7 +1712,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
      * the specified amount of elements
      *
      * @param string $field The field you want to apply the rule to.
-     * @param int $count The number maximim amount of elements the field should have
+     * @param int $count The number maximum amount of elements the field should have
      * @param string|null $message The error message when the rule fails.
      * @param string|callable|null $when Either 'create' or 'update' or a callable that returns
      *   true when the validation rule should be applied.
@@ -1380,11 +1722,13 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function hasAtMost($field, $count, $message = null, $when = null)
     {
         $extra = array_filter(['on' => $when, 'message' => $message]);
+
         return $this->add($field, 'hasAtMost', $extra + [
             'rule' => function ($value) use ($count) {
                 if (is_array($value) && isset($value['_ids'])) {
                     $value = $value['_ids'];
                 }
+
                 return Validation::numElements($value, '<=', $count);
             }
         ]);
@@ -1403,6 +1747,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
         $providers = $this->_providers;
         $data = [];
         $context = compact('data', 'newRecord', 'field', 'providers');
+
         return $this->_canBeEmpty($this->field($field), $context);
     }
 
@@ -1419,7 +1764,27 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
         $providers = $this->_providers;
         $data = [];
         $context = compact('data', 'newRecord', 'field', 'providers');
+
         return !$this->_checkPresence($this->field($field), $context);
+    }
+
+    /**
+     * Returns whether or not a field matches against a regular expression.
+     *
+     * @param string $field Field name.
+     * @param string $regex Regular expression.
+     * @param string|null $message The error message when the rule fails.
+     * @param string|callable|null $when Either 'create' or 'update' or a callable that returns
+     *   true when the validation rule should be applied.
+     * @return $this
+     */
+    public function regex($field, $regex, $message = null, $when = null)
+    {
+        $extra = array_filter(['on' => $when, 'message' => $message]);
+
+        return $this->add($field, 'regex', $extra + [
+            'rule' => ['custom', $regex]
+        ]);
     }
 
     /**
@@ -1483,17 +1848,19 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
      */
     protected function _fieldIsEmpty($data)
     {
-        if (empty($data) && $data !== '0' && $data !== false && $data !== 0 && $data !== 0.0) {
+        if (empty($data) && !is_bool($data) && !is_numeric($data)) {
             return true;
         }
         $isArray = is_array($data);
         if ($isArray && (isset($data['year']) || isset($data['hour']))) {
             $value = implode('', $data);
+
             return strlen($value) === 0;
         }
         if ($isArray && isset($data['name'], $data['type'], $data['tmp_name'], $data['error'])) {
             return (int)$data['error'] === UPLOAD_ERR_NO_FILE;
         }
+
         return false;
     }
 
@@ -1511,7 +1878,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     {
         $errors = [];
         // Loading default provider in case there is none
-        $this->provider('default');
+        $this->getProvider('default');
         $message = 'The provided value is invalid';
 
         if ($this->_useI18n) {
@@ -1536,6 +1903,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
                 break;
             }
         }
+
         return $errors;
     }
 
@@ -1554,6 +1922,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
                 'rules' => array_keys($fieldSet->rules()),
             ];
         }
+
         return [
             '_presenceMessages' => $this->_presenceMessages,
             '_allowEmptyMessages' => $this->_allowEmptyMessages,

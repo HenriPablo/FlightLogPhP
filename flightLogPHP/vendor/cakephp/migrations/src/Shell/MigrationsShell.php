@@ -14,11 +14,19 @@ namespace Migrations\Shell;
 use Cake\Console\Shell;
 use Migrations\MigrationsDispatcher;
 use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 /**
  * A wrapper shell for phinx migrations, used to inject our own
  * console actions so that database configuration already defined
  * for the application can be reused.
+ *
+ * @property \Migrations\Shell\Task\CreateTask $Create
+ * @property \Migrations\Shell\Task\DumpTask $Dump
+ * @property \Migrations\Shell\Task\MarkMigratedTask $MarkMigrated
+ * @property \Migrations\Shell\Task\MigrateTask $Migrate
+ * @property \Migrations\Shell\Task\RollbackTask $Rollback
+ * @property \Migrations\Shell\Task\StatusTask $Status
  */
 class MigrationsShell extends Shell
 {
@@ -59,6 +67,8 @@ class MigrationsShell extends Shell
             ->addOption('seed')
             ->addOption('ansi')
             ->addOption('no-ansi')
+            ->addOption('no-lock', ['boolean' => true])
+            ->addOption('force', ['boolean' => true])
             ->addOption('version', ['short' => 'V'])
             ->addOption('no-interaction', ['short' => 'n'])
             ->addOption('template', ['short' => 't'])
@@ -92,12 +102,15 @@ class MigrationsShell extends Shell
      */
     public function main()
     {
-        $app = new MigrationsDispatcher(PHINX_VERSION);
+        $app = $this->getApp();
         $input = new ArgvInput($this->argv);
         $app->setAutoExit(false);
-        $exitCode = $app->run($input);
+        $exitCode = $app->run($input, $this->getOutput());
 
-        if (isset($this->argv[1]) && in_array($this->argv[1], ['migrate', 'rollback']) && $exitCode === 0) {
+        if (isset($this->argv[1]) && in_array($this->argv[1], ['migrate', 'rollback']) &&
+            !$this->params['no-lock'] &&
+            $exitCode === 0
+        ) {
             $dispatchCommand = 'migrations dump';
             if (!empty($this->params['connection'])) {
                 $dispatchCommand .= ' -c ' . $this->params['connection'];
@@ -118,6 +131,26 @@ class MigrationsShell extends Shell
     }
 
     /**
+     * Returns the MigrationsDispatcher the Shell will have to use
+     *
+     * @return \Migrations\MigrationsDispatcher
+     */
+    protected function getApp()
+    {
+        return new MigrationsDispatcher(PHINX_VERSION);
+    }
+
+    /**
+     * Returns the instance of OutputInterface the MigrationsDispatcher will have to use.
+     *
+     * @return \Symfony\Component\Console\Output\ConsoleOutput
+     */
+    protected function getOutput()
+    {
+        return new ConsoleOutput();
+    }
+
+    /**
      * Override the default behavior to save the command called
      * in order to pass it to the command dispatcher
      *
@@ -127,6 +160,7 @@ class MigrationsShell extends Shell
     {
         array_unshift($argv, 'migrations');
         $this->argv = $argv;
+
         return parent::runCommand($argv, $autoMethod, $extra);
     }
 
@@ -134,11 +168,11 @@ class MigrationsShell extends Shell
      * Display the help in the correct format
      *
      * @param string $command The command to get help for.
-     * @return void
+     * @return int|bool|null Exit code or number of bytes written to stdout
      */
     protected function displayHelp($command)
     {
-        $this->main();
+        return $this->main();
     }
 
     /**

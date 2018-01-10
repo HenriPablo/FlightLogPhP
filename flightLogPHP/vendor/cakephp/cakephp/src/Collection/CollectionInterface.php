@@ -1,16 +1,16 @@
 <?php
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         3.0.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\Collection;
 
@@ -21,7 +21,6 @@ use JsonSerializable;
  * Describes the methods a Collection should implement. A collection is an immutable
  * list of elements exposing a number of traversing and extracting method for
  * generating other collections.
- *
  */
 interface CollectionInterface extends Iterator, JsonSerializable
 {
@@ -113,9 +112,11 @@ interface CollectionInterface extends Iterator, JsonSerializable
      * });
      * ```
      *
+     * Empty collections always return true because it is a vacuous truth.
+     *
      * @param callable $c a callback function
      * @return bool true if for all elements in this collection the provided
-     * callback returns true, false otherwise
+     *   callback returns true, false otherwise.
      */
     public function every(callable $c);
 
@@ -136,8 +137,8 @@ interface CollectionInterface extends Iterator, JsonSerializable
      * ```
      *
      * @param callable $c a callback function
-     * @return bool true if for all elements in this collection the provided
-     * callback returns true, false otherwise
+     * @return bool true if the provided callback returns true for any element in this
+     * collection, false otherwise
      */
     public function some(callable $c);
 
@@ -184,7 +185,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *
      * @param callable $c The callback function to be called
      * @param mixed $zero The state of reduction
-     * @return void
+     * @return mixed
      */
     public function reduce(callable $c, $zero = null);
 
@@ -283,6 +284,63 @@ interface CollectionInterface extends Iterator, JsonSerializable
      * @return mixed The value of the bottom element in the collection
      */
     public function min($callback, $type = SORT_NUMERIC);
+
+    /**
+     * Returns the average of all the values extracted with $matcher
+     * or of this collection.
+     *
+     * ### Example:
+     *
+     * ```
+     * $items = [
+     *  ['invoice' => ['total' => 100]],
+     *  ['invoice' => ['total' => 200]]
+     * ];
+     *
+     * $total = (new Collection($items))->avg('invoice.total');
+     *
+     * // Total: 150
+     *
+     * $total = (new Collection([1, 2, 3]))->avg();
+     * // Total: 2
+     * ```
+     *
+     * @param string|callable|null $matcher The property name to sum or a function
+     * If no value is passed, an identity function will be used.
+     * that will return the value of the property to sum.
+     * @return float|int|null
+     */
+    public function avg($matcher = null);
+
+    /**
+     * Returns the median of all the values extracted with $matcher
+     * or of this collection.
+     *
+     * ### Example:
+     *
+     * ```
+     * $items = [
+     *  ['invoice' => ['total' => 400]],
+     *  ['invoice' => ['total' => 500]]
+     *  ['invoice' => ['total' => 100]]
+     *  ['invoice' => ['total' => 333]]
+     *  ['invoice' => ['total' => 200]]
+     * ];
+     *
+     * $total = (new Collection($items))->median('invoice.total');
+     *
+     * // Total: 333
+     *
+     * $total = (new Collection([1, 2, 3, 4]))->median();
+     * // Total: 2.5
+     * ```
+     *
+     * @param string|callable|null $matcher The property name to sum or a function
+     * If no value is passed, an identity function will be used.
+     * that will return the value of the property to sum.
+     * @return float|int|null
+     */
+    public function median($matcher = null);
 
     /**
      * Returns a sorted iterator out of the elements in this collection,
@@ -450,8 +508,8 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *
      * ```
      * $items = [
-     *  ['invoice' => ['total' => 100],
-     *  ['invoice' => ['total' => 200]
+     *  ['invoice' => ['total' => 100]],
+     *  ['invoice' => ['total' => 200]]
      * ];
      *
      * $total = (new Collection($items))->sumOf('invoice.total');
@@ -620,9 +678,10 @@ interface CollectionInterface extends Iterator, JsonSerializable
      * whether an element is parent of another
      * @param callable|string $parentPath the column name path to use for determining
      * whether an element is child of another
+     * @param string $nestingKey The key name under which children are nested
      * @return \Cake\Collection\CollectionInterface
      */
-    public function nest($idPath, $parentPath);
+    public function nest($idPath, $parentPath, $nestingKey = 'children');
 
     /**
      * Returns a new collection containing each of the elements found in `$values` as
@@ -891,8 +950,8 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *
      * ```
      * $collection = new Collection([1, 2]);
-     * $zipped = $collection->zipWith([3, 4], [5, 6], function () {
-     *   return array_sum(func_get_args());
+     * $zipped = $collection->zipWith([3, 4], [5, 6], function (...$args) {
+     *   return array_sum($args);
      * });
      * $zipped->toList(); // returns [9, 12]; [(1 + 3 + 5), (2 + 4 + 6)]
      * ```
@@ -916,8 +975,26 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *
      * @param int $chunkSize The maximum size for each chunk
      * @return \Cake\Collection\CollectionInterface
+     * @deprecated 4.0.0 Deprecated in favor of chunks
      */
     public function chunk($chunkSize);
+
+    /**
+     * Breaks the collection into smaller arrays of the given size.
+     *
+     * ### Example:
+     *
+     * ```
+     * $items ['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 5, 'f' => 6];
+     * $chunked = (new Collection($items))->chunkWithKeys(3)->toList();
+     * // Returns [['a' => 1, 'b' => 2, 'c' => 3], ['d' => 4, 'e' => 5, 'f' => 6]]
+     * ```
+     *
+     * @param int $chunkSize The maximum size for each chunk
+     * @param bool $preserveKeys If the keys of the array should be preserved
+     * @return \Cake\Collection\CollectionInterface
+     */
+    public function chunkWithKeys($chunkSize, $preserveKeys = true);
 
     /**
      * Returns whether or not there are elements in this collection
@@ -942,7 +1019,35 @@ interface CollectionInterface extends Iterator, JsonSerializable
      * losing any possible transformations. This is used mainly to remove empty
      * IteratorIterator wrappers that can only slowdown the iteration process.
      *
-     * @return \Iterator
+     * @return \Traversable
      */
     public function unwrap();
+
+    /**
+     * Transpose rows and columns into columns and rows
+     *
+     * ### Example:
+     *
+     * ```
+     * $items = [
+     *       ['Products', '2012', '2013', '2014'],
+     *       ['Product A', '200', '100', '50'],
+     *       ['Product B', '300', '200', '100'],
+     *       ['Product C', '400', '300', '200'],
+     * ]
+     *
+     * $transpose = (new Collection($items))->transpose()->toList();
+     *
+     * // Returns
+     * // [
+     * //     ['Products', 'Product A', 'Product B', 'Product C'],
+     * //     ['2012', '200', '300', '400'],
+     * //     ['2013', '100', '200', '300'],
+     * //     ['2014', '50', '100', '200'],
+     * // ]
+     * ```
+     *
+     * @return \Cake\Collection\CollectionInterface
+     */
+    public function transpose();
 }

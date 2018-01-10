@@ -1,16 +1,16 @@
 <?php
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         3.0.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\Database\Type;
 
@@ -27,14 +27,14 @@ class DateType extends DateTimeType
      * class is constructed. After that use `useMutable()` or `useImmutable()` instead.
      *
      * @var string
-     * @deprecated Use DateType::useMutable() or DateType::useImmutable() instead.
+     * @deprecated 3.2.0 Use DateType::useMutable() or DateType::useImmutable() instead.
      */
     public static $dateTimeClass = 'Cake\I18n\Date';
 
     /**
      * Date format for DateTime object
      *
-     * @var string
+     * @var string|array
      */
     protected $_format = 'Y-m-d';
 
@@ -46,6 +46,7 @@ class DateType extends DateTimeType
     public function useImmutable()
     {
         $this->_setClassName('Cake\I18n\FrozenDate', 'DateTimeImmutable');
+
         return $this;
     }
 
@@ -57,6 +58,7 @@ class DateType extends DateTimeType
     public function useMutable()
     {
         $this->_setClassName('Cake\I18n\Date', 'DateTime');
+
         return $this;
     }
 
@@ -64,7 +66,7 @@ class DateType extends DateTimeType
      * Convert request data into a datetime object.
      *
      * @param mixed $value Request data
-     * @return \DateTime
+     * @return \DateTimeInterface
      */
     public function marshal($value)
     {
@@ -72,6 +74,7 @@ class DateType extends DateTimeType
         if ($date instanceof DateTime) {
             $date->setTime(0, 0, 0);
         }
+
         return $date;
     }
 
@@ -88,6 +91,7 @@ class DateType extends DateTimeType
         if ($date instanceof DateTime) {
             $date->setTime(0, 0, 0);
         }
+
         return $date;
     }
 
@@ -96,7 +100,9 @@ class DateType extends DateTimeType
      */
     protected function _parseValue($value)
     {
+        /* @var \Cake\I18n\Time $class */
         $class = $this->_className;
+
         return $class::parseDate($value, $this->_localeFormat);
     }
 }

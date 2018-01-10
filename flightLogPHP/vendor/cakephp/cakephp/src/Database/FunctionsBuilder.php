@@ -1,16 +1,16 @@
 <?php
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         3.0.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\Database;
 
@@ -56,6 +56,7 @@ class FunctionsBuilder
         } else {
             $expression = [$expression => 'literal'];
         }
+
         return $this->_build($name, $expression, $types, $return);
     }
 
@@ -72,6 +73,7 @@ class FunctionsBuilder
         if (current($types) === 'integer') {
             $returnType = 'integer';
         }
+
         return $this->_literalArgumentFunction('SUM', $expression, $types, $returnType);
     }
 
@@ -184,7 +186,8 @@ class FunctionsBuilder
     public function extract($part, $expression, $types = [])
     {
         $expression = $this->_literalArgumentFunction('EXTRACT', $expression, $types, 'integer');
-        $expression->tieWith(' FROM')->add([$part => 'literal'], [], true);
+        $expression->setConjunction(' FROM')->add([$part => 'literal'], [], true);
+
         return $expression;
     }
 
@@ -204,7 +207,8 @@ class FunctionsBuilder
         }
         $interval = $value . ' ' . $unit;
         $expression = $this->_literalArgumentFunction('DATE_ADD', $expression, $types, 'datetime');
-        $expression->tieWith(', INTERVAL')->add([$interval => 'literal']);
+        $expression->setConjunction(', INTERVAL')->add([$interval => 'literal']);
+
         return $expression;
     }
 
@@ -245,13 +249,13 @@ class FunctionsBuilder
     public function now($type = 'datetime')
     {
         if ($type === 'datetime') {
-            return $this->_build('NOW')->returnType('datetime');
+            return $this->_build('NOW')->setReturnType('datetime');
         }
         if ($type === 'date') {
-            return $this->_build('CURRENT_DATE')->returnType('date');
+            return $this->_build('CURRENT_DATE')->setReturnType('date');
         }
         if ($type === 'time') {
-            return $this->_build('CURRENT_TIME')->returnType('time');
+            return $this->_build('CURRENT_TIME')->setReturnType('time');
         }
     }
 

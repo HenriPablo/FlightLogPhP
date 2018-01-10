@@ -1,16 +1,16 @@
 <?php
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         3.1.6
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\Utility;
 
@@ -21,7 +21,7 @@ use RuntimeException;
  *
  * Provides the encrypt/decrypt logic for the CookieComponent.
  *
- * @link http://book.cakephp.org/3.0/en/controllers/components/cookie.html
+ * @link https://book.cakephp.org/3.0/en/controllers/components/cookie.html
  */
 trait CookieCryptTrait
 {
@@ -58,7 +58,7 @@ trait CookieCryptTrait
             return $value;
         }
         $this->_checkCipher($encrypt);
-        $prefix = "Q2FrZQ==.";
+        $prefix = 'Q2FrZQ==.';
         $cipher = null;
         if ($key === null) {
             $key = $this->_getCookieEncryptionKey();
@@ -69,6 +69,7 @@ trait CookieCryptTrait
         if ($encrypt === 'aes') {
             $cipher = Security::encrypt($value, $key);
         }
+
         return $prefix . base64_encode($cipher);
     }
 
@@ -96,7 +97,7 @@ trait CookieCryptTrait
      * @param array $values Values to decrypt
      * @param string|bool $mode Encryption mode
      * @param string|null $key Used as the security salt if specified.
-     * @return string decrypted string
+     * @return string|array Decrypted values
      */
     protected function _decrypt($values, $mode, $key = null)
     {
@@ -108,6 +109,7 @@ trait CookieCryptTrait
         foreach ($values as $name => $value) {
             $decrypted[$name] = $this->_decode($value, $mode, $key);
         }
+
         return $decrypted;
     }
 
@@ -117,7 +119,7 @@ trait CookieCryptTrait
      * @param string $value The value to decode & decrypt.
      * @param string|false $encrypt The encryption cipher to use.
      * @param string|null $key Used as the security salt if specified.
-     * @return string Decoded value.
+     * @return string|array Decoded values.
      */
     protected function _decode($value, $encrypt, $key)
     {
@@ -136,6 +138,7 @@ trait CookieCryptTrait
         if ($encrypt === 'aes') {
             $value = Security::decrypt($value, $key);
         }
+
         return $this->_explode($value);
     }
 
@@ -155,13 +158,14 @@ trait CookieCryptTrait
      * Maintains reading backwards compatibility with 1.x CookieComponent::_implode().
      *
      * @param string $string A string containing JSON encoded data, or a bare string.
-     * @return array Map of key and values
+     * @return string|array Map of key and values
      */
     protected function _explode($string)
     {
         $first = substr($string, 0, 1);
         if ($first === '{' || $first === '[') {
             $ret = json_decode($string, true);
+
             return ($ret !== null) ? $ret : $string;
         }
         $array = [];
@@ -172,6 +176,7 @@ trait CookieCryptTrait
             }
             $array[$key[0]] = $key[1];
         }
+
         return $array;
     }
 }

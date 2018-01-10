@@ -1,18 +1,20 @@
 <?php
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         3.0.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\I18n\Parser;
+
+use Cake\I18n\Translator;
 
 /**
  * Parses file in PO format
@@ -23,11 +25,10 @@ namespace Cake\I18n\Parser;
  */
 class PoFileParser
 {
-
     /**
      * Parses portable object (PO) format.
      *
-     * From http://www.gnu.org/software/gettext/manual/gettext.html#PO-Files
+     * From https://www.gnu.org/software/gettext/manual/gettext.html#PO-Files
      * we should be able to parse files having:
      *
      * white-space
@@ -71,7 +72,7 @@ class PoFileParser
      */
     public function parse($resource)
     {
-        $stream = fopen($resource, 'r');
+        $stream = fopen($resource, 'rb');
 
         $defaults = [
             'ids' => [],
@@ -142,11 +143,10 @@ class PoFileParser
 
         $translation = stripcslashes($translation);
 
-        if ($context && (!isset($messages[$singular]) || is_array($messages[$singular]))) {
+        if ($context !== null && !isset($messages[$singular]['_context'][$context])) {
             $messages[$singular]['_context'][$context] = $translation;
-        }
-        if ($context === null) {
-            $messages[$singular] = $translation;
+        } elseif (!isset($messages[$singular]['_context'][''])) {
+            $messages[$singular]['_context'][''] = $translation;
         }
 
         if (isset($item['ids']['plural'])) {
@@ -166,10 +166,10 @@ class PoFileParser
             $plurals = array_map('stripcslashes', $plurals);
             $key = stripcslashes($item['ids']['plural']);
 
-            if ($context) {
-                $messages[$key]['_context'][$context] = $plurals;
+            if ($context !== null) {
+                $messages[Translator::PLURAL_PREFIX . $key]['_context'][$context] = $plurals;
             } else {
-                $messages[$key] = $plurals;
+                $messages[Translator::PLURAL_PREFIX . $key]['_context'][''] = $plurals;
             }
         }
     }

@@ -28,6 +28,7 @@ use Cake\Event\Event;
 class AppController extends Controller
 {
 
+    public $helpers = ['Less.Less'];
     /**
      * Initialization hook method.
      *
@@ -43,6 +44,7 @@ class AppController extends Controller
 
         $this->loadComponent('RequestHandler');
         $this->loadComponent('Flash');
+
     }
 
     /**

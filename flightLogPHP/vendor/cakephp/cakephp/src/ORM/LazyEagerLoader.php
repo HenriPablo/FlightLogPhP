@@ -1,16 +1,16 @@
 <?php
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         3.1.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\ORM;
 
@@ -54,6 +54,7 @@ class LazyEagerLoader
         $associations = array_keys($query->contain());
 
         $entities = $this->_injectResults($entities, $query, $associations, $source);
+
         return $returnSingle ? array_shift($entities) : $entities;
     }
 
@@ -68,7 +69,7 @@ class LazyEagerLoader
      */
     protected function _getQuery($objects, $contain, $source)
     {
-        $primaryKey = $source->primaryKey();
+        $primaryKey = $source->getPrimaryKey();
         $method = is_string($primaryKey) ? 'get' : 'extract';
 
         $keys = $objects->map(function ($entity) use ($primaryKey, $method) {
@@ -89,14 +90,15 @@ class LazyEagerLoader
 
                 $types = array_intersect_key($q->defaultTypes(), array_flip($primaryKey));
                 $primaryKey = array_map([$source, 'aliasField'], $primaryKey);
+
                 return new TupleComparison($primaryKey, $keys->toList(), $types, 'IN');
             })
             ->contain($contain);
 
-        foreach ($query->eagerLoader()->attachableAssociations($source) as $loadable) {
-            $config = $loadable->config();
+        foreach ($query->getEagerLoader()->attachableAssociations($source) as $loadable) {
+            $config = $loadable->getConfig();
             $config['includeFields'] = true;
-            $loadable->config($config);
+            $loadable->setConfig($config);
         }
 
         return $query;
@@ -115,8 +117,9 @@ class LazyEagerLoader
         $map = [];
         $container = $source->associations();
         foreach ($associations as $assoc) {
-            $map[$assoc] = $container->get($assoc)->property();
+            $map[$assoc] = $container->get($assoc)->getProperty();
         }
+
         return $map;
     }
 
@@ -134,7 +137,7 @@ class LazyEagerLoader
     {
         $injected = [];
         $properties = $this->_getPropertyMap($source, $associations);
-        $primaryKey = (array)$source->primaryKey();
+        $primaryKey = (array)$source->getPrimaryKey();
         $results = $results
             ->indexBy(function ($e) use ($primaryKey) {
                 return implode(';', $e->extract($primaryKey));
@@ -152,7 +155,7 @@ class LazyEagerLoader
             foreach ($associations as $assoc) {
                 $property = $properties[$assoc];
                 $object->set($property, $loaded->get($property), ['useSetters' => false]);
-                $object->dirty($property, false);
+                $object->setDirty($property, false);
             }
             $injected[$k] = $object;
         }

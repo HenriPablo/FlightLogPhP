@@ -23,6 +23,9 @@ use Symfony\Component\Console\Input\ArrayInput;
 
 /**
  * Task class for generating migration diff files.
+ *
+ * @property \Bake\Shell\Task\BakeTemplateTask $BakeTemplate
+ * @property \Bake\Shell\Task\TestTask $Test
  */
 class MigrationDiffTask extends SimpleMigrationTask
 {
@@ -101,6 +104,7 @@ class MigrationDiffTask extends SimpleMigrationTask
         if (!$this->checkSync()) {
             $this->error('Your migrations history is not in sync with your migrations files. ' .
                 'Make sure all your migrations have been migrated before baking a diff.');
+
             return 1;
         }
 
@@ -155,6 +159,7 @@ class MigrationDiffTask extends SimpleMigrationTask
     public function getCollection($connection)
     {
         $connection = ConnectionManager::get($connection);
+
         return $connection->schemaCollection();
     }
 
@@ -228,22 +233,44 @@ class MigrationDiffTask extends SimpleMigrationTask
             // brand new columns
             $addedColumns = array_diff($currentColumns, $oldColumns);
             foreach ($addedColumns as $columnName) {
-                $this->templateData[$table]['columns']['add'][$columnName] = $currentSchema->column($columnName);
+                $column = $currentSchema->column($columnName);
+                $key = array_search($columnName, $currentColumns);
+                if ($key > 0) {
+                    $column['after'] = $currentColumns[$key - 1];
+                }
+                $this->templateData[$table]['columns']['add'][$columnName] = $column;
             }
 
             // changes in columns meta-data
             foreach ($currentColumns as $columnName) {
                 $column = $currentSchema->column($columnName);
                 $oldColumn = $this->dumpSchema[$table]->column($columnName);
+                unset($column['collate']);
+                unset($oldColumn['collate']);
 
                 if (in_array($columnName, $oldColumns) &&
                     $column !== $oldColumn
                 ) {
                     $changedAttributes = array_diff($column, $oldColumn);
 
-                    if (!isset($changedAttributes['type'])) {
-                        $changedAttributes['type'] = $column['type'];
+                    foreach (['type', 'length', 'null', 'default'] as $attribute) {
+                        $phinxAttributeName = $attribute;
+                        if ($attribute == 'length') {
+                            $phinxAttributeName = 'limit';
+                        }
+                        if (!isset($changedAttributes[$phinxAttributeName])) {
+                            $changedAttributes[$phinxAttributeName] = $column[$attribute];
+                        }
                     }
+
+                    if (isset($changedAttributes['length'])) {
+                        if (!isset($changedAttributes['limit'])) {
+                            $changedAttributes['limit'] = $changedAttributes['length'];
+                        }
+
+                        unset($changedAttributes['length']);
+                    }
+
                     $this->templateData[$table]['columns']['changed'][$columnName] = $changedAttributes;
                 }
             }
@@ -254,9 +281,13 @@ class MigrationDiffTask extends SimpleMigrationTask
             }
             $removedColumns = array_diff($oldColumns, $currentColumns);
             if (!empty($removedColumns)) {
-                foreach ($removedColumns as $column) {
-                    $this->templateData[$table]['columns']['remove'][$column] =
-                        $this->dumpSchema[$table]->column($column);
+                foreach ($removedColumns as $columnName) {
+                    $column = $this->dumpSchema[$table]->column($columnName);
+                    $key = array_search($columnName, $oldColumns);
+                    if ($key > 0) {
+                        $column['after'] = $oldColumns[$key - 1];
+                    }
+                    $this->templateData[$table]['columns']['remove'][$columnName] = $column;
                 }
             }
         }
@@ -393,6 +424,7 @@ class MigrationDiffTask extends SimpleMigrationTask
      * Fallback method called to bake a snapshot when the phinx log history is empty and
      * there are no migration files.
      *
+     * @param string $name Name.
      * @return int Value of the snapshot baking dispatch process
      */
     protected function bakeSnapshot($name)
@@ -469,7 +501,7 @@ class MigrationDiffTask extends SimpleMigrationTask
 
         $collection = ConnectionManager::get($this->connection)->schemaCollection();
         foreach ($this->tables as $table) {
-            if (strpos($table, 'phinx') === 0) {
+            if (preg_match("/^.*phinxlog$/", $table) === 1) {
                 continue;
             }
 
@@ -500,6 +532,7 @@ class MigrationDiffTask extends SimpleMigrationTask
             'help' => 'Name of the migration to bake. Can use Plugin.name to bake migration files into plugins.',
             'required' => true
         ]);
+
         return $parser;
     }
 }

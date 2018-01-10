@@ -6,10 +6,11 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    'Psr\\Log\\' => array($vendorDir . '/psr/log'),
+    'Umpirsky\\' => array($vendorDir . '/umpirsky/twig-php-function/src'),
+    'Twig_' => array($vendorDir . '/twig/twig/lib'),
+    'Less' => array($vendorDir . '/oyejorge/less.php/lib'),
     'JakubOnderka\\PhpConsoleHighlighter' => array($vendorDir . '/jakub-onderka/php-console-highlighter/src'),
     'JakubOnderka\\PhpConsoleColor' => array($vendorDir . '/jakub-onderka/php-console-color/src'),
     'Detection' => array($vendorDir . '/mobiledetect/mobiledetectlib/namespaced'),
-    'Aura\\Intl' => array($vendorDir . '/aura/intl/src'),
-    'Aura\\Composer\\' => array($vendorDir . '/aura/installer-default/src'),
+    'Aptoma' => array($vendorDir . '/aptoma/twig-markdown/src'),
 );

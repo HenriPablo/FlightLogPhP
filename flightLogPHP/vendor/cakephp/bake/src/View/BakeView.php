@@ -17,13 +17,10 @@ namespace Bake\View;
 use Cake\Core\Configure;
 use Cake\Core\ConventionsTrait;
 use Cake\Core\InstanceConfigTrait;
-use Cake\Event\EventManager;
-use Cake\Network\Request;
-use Cake\Network\Response;
-use Cake\Utility\Inflector;
-use Cake\View\View;
+use Cake\Utility\Text;
+use WyriHaximus\TwigView\View\TwigView;
 
-class BakeView extends View
+class BakeView extends TwigView
 {
     use ConventionsTrait;
     use InstanceConfigTrait;
@@ -33,17 +30,21 @@ class BakeView extends View
      *
      * This config is read when evaluating a template file.
      *
-     * phpTagReplacements are applied to the contents of a bake template, to allow php tags
-     * to be treated as plain text
+     * - `phpTagReplacements` are applied to the contents of a bake template, to allow php tags
+     *   to be treated as plain text
+     * - `replacements` are applied in order on the template contents before the template is evaluated.
      *
-     * replacements are applied in order on the template contents before the template is evaluated
-     * In order these:
-     *     swallow leading whitespace for <%- tags
-     *     swallow trailing whitespace for -%> tags
-     *     Add an extra newline to <%=, to counteract php automatically removing a newline
-     *     Replace remaining <=% with php short echo tags
-     *     Replace <% with php open tags
-     *     Replace %> with php close tags
+     * The default replacements are (in the following order):
+     *
+     * - swallow leading whitespace for <%- tags
+     * - swallow trailing whitespace for -%> tags
+     * - Add an extra newline to <%=, to counteract php automatically removing a newline
+     * - Replace remaining <=% with php short echo tags
+     * - Replace <% with php open tags
+     * - Replace %> with php close tags
+     *
+     * Replacements that start with `/` will be treated as regex replacements.
+     * All other values will be treated used with str_replace()
      *
      * @var array
      */
@@ -71,22 +72,29 @@ class BakeView extends View
     protected $_tmpLocation;
 
     /**
-     * Upon construction, append the plugin's template paths to the paths to check
+     * Templates extensions to search for.
      *
-     * @param \Cake\Network\Request|null $request Request instance.
-     * @param \Cake\Network\Response|null $response Response instance.
-     * @param \Cake\Event\EventManager|null $eventManager Event manager instance.
-     * @param array $viewOptions View options. See View::$_passedVars for list of
-     *   options which get set as class properties.
+     * @var array
      */
-    public function __construct(
-        Request $request = null,
-        Response $response = null,
-        EventManager $eventManager = null,
-        array $viewOptions = []
-    ) {
-        parent::__construct($request, $response, $eventManager, $viewOptions);
+    protected $extensions = [
+        '.twig',
+        '.ctp',
+    ];
 
+    /**
+     * View file being evaluated.
+     *
+     * @var string
+     */
+    protected $__viewFile;
+
+    /**
+     * Initialize view
+     *
+     * @return void
+     */
+    public function initialize()
+    {
         $bakeTemplates = dirname(dirname(__FILE__)) . DS . 'Template' . DS;
         $paths = (array)Configure::read('App.paths.templates');
 
@@ -99,6 +107,8 @@ class BakeView extends View
         if (!file_exists($this->_tmpLocation)) {
             mkdir($this->_tmpLocation);
         }
+
+        parent::initialize();
     }
 
     /**
@@ -125,8 +135,8 @@ class BakeView extends View
     {
         $viewFileName = $this->_getViewFileName($view);
         $templateEventName = str_replace(
-            ['.ctp', DS],
-            ['', '.'],
+            ['.ctp', '.twig', DS],
+            ['', '', '.'],
             explode('Template' . DS . 'Bake' . DS, $viewFileName)[1]
         );
 
@@ -178,9 +188,13 @@ class BakeView extends View
      */
     protected function _evaluate($viewFile, $dataForView)
     {
+        if (substr($viewFile, -4) === 'twig') {
+            return parent::_evaluate($viewFile, $dataForView);
+        }
+
         $viewString = $this->_getViewFileContents($viewFile);
 
-        $replacements = array_merge($this->config('phpTagReplacements') + $this->config('replacements'));
+        $replacements = $this->getConfig('phpTagReplacements') + $this->getConfig('replacements');
 
         foreach ($replacements as $find => $replace) {
             if ($this->_isRegex($find)) {
@@ -190,7 +204,7 @@ class BakeView extends View
             }
         }
 
-        $this->__viewFile = $this->_tmpLocation . Inflector::slug(preg_replace('@.*Template[/\\\\]@', '', $viewFile)) . '.php';
+        $this->__viewFile = $this->_tmpLocation . Text::slug(preg_replace('@.*Template[/\\\\]@', '', $viewFile)) . '.php';
         file_put_contents($this->__viewFile, $viewString);
 
         unset($viewFile, $viewString, $replacements, $find, $replace);
@@ -201,7 +215,7 @@ class BakeView extends View
 
         $content = ob_get_clean();
 
-        $unPhp = $this->config('phpTagReplacements');
+        $unPhp = $this->getConfig('phpTagReplacements');
 
         return str_replace(array_values($unPhp), array_keys($unPhp), $content);
     }
@@ -244,10 +258,6 @@ class BakeView extends View
      */
     protected function _isRegex($maybeRegex)
     {
-        // @codingStandardsIgnoreStart
-        $isRegex = @preg_match($maybeRegex, '');
-        // @codingStandardsIgnoreEnd
-
-        return $isRegex !== false;
+        return substr($maybeRegex, 0, 1) === '/';
     }
 }

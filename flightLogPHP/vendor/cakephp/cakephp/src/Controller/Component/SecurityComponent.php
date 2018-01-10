@@ -1,16 +1,16 @@
 <?php
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         0.10.8
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\Controller\Component;
 
@@ -20,8 +20,8 @@ use Cake\Controller\Exception\AuthSecurityException;
 use Cake\Controller\Exception\SecurityException;
 use Cake\Core\Configure;
 use Cake\Event\Event;
+use Cake\Http\ServerRequest;
 use Cake\Network\Exception\BadRequestException;
-use Cake\Network\Request;
 use Cake\Utility\Hash;
 use Cake\Utility\Security;
 
@@ -34,7 +34,7 @@ use Cake\Utility\Security;
  * - Requiring that SSL be used.
  * - Limiting cross controller communication.
  *
- * @link http://book.cakephp.org/3.0/en/controllers/components/security.html
+ * @link https://book.cakephp.org/3.0/en/controllers/components/security.html
  */
 class SecurityComponent extends Component
 {
@@ -61,7 +61,7 @@ class SecurityComponent extends Component
      *   and hidden unlocked fields do not have their values checked.
      * - `unlockedActions` - Actions to exclude from POST validation checks.
      *   Other checks like requireAuth(), requireSecure() etc. will still be applied.
-     * - `validatePost` -  Whether to validate POST data. Set to false to disable
+     * - `validatePost` - Whether to validate POST data. Set to false to disable
      *   for data coming from 3rd party services, etc.
      *
      * @var array
@@ -82,14 +82,7 @@ class SecurityComponent extends Component
      *
      * @var string
      */
-    protected $_action = null;
-
-    /**
-     * Request object
-     *
-     * @var \Cake\Network\Request
-     */
-    public $request;
+    protected $_action;
 
     /**
      * The Session object
@@ -106,18 +99,16 @@ class SecurityComponent extends Component
      */
     public function startup(Event $event)
     {
-        $controller = $event->subject();
-        $this->session = $this->request->session();
-        $this->_action = $this->request->params['action'];
-        $hasData = !empty($this->request->data);
+        /** @var \Cake\Controller\Controller $controller */
+        $controller = $event->getSubject();
+        $this->session = $controller->request->getSession();
+        $this->_action = $controller->request->getParam('action');
+        $hasData = ($controller->request->getData() || $controller->request->is(['put', 'post', 'delete', 'patch']));
         try {
             $this->_secureRequired($controller);
             $this->_authRequired($controller);
 
-            $isNotRequestAction = (
-                !isset($controller->request->params['requested']) ||
-                $controller->request->params['requested'] != 1
-            );
+            $isNotRequestAction = !$controller->request->getParam('requested');
 
             if ($this->_action === $this->_config['blackHoleCallback']) {
                 throw new AuthSecurityException(sprintf('Action %s is defined as the blackhole callback.', $this->_action));
@@ -134,7 +125,7 @@ class SecurityComponent extends Component
         }
 
         $this->generateToken($controller->request);
-        if ($hasData && is_array($controller->request->data)) {
+        if ($hasData && is_array($controller->request->getData())) {
             unset($controller->request->data['_Token']);
         }
     }
@@ -184,10 +175,10 @@ class SecurityComponent extends Component
      *
      * @param \Cake\Controller\Controller $controller Instantiating controller
      * @param string $error Error method
-     * @param \Cake\Controller\Exception\SecurityException $exception Additional debug info describing the cause
+     * @param \Cake\Controller\Exception\SecurityException|null $exception Additional debug info describing the cause
      * @return mixed If specified, controller blackHoleCallback's response, or no return otherwise
      * @see \Cake\Controller\Component\SecurityComponent::$blackHoleCallback
-     * @link http://book.cakephp.org/3.0/en/controllers/components/security.html#handling-blackhole-callbacks
+     * @link https://book.cakephp.org/3.0/en/controllers/components/security.html#handling-blackhole-callbacks
      * @throws \Cake\Network\Exception\BadRequestException
      */
     public function blackHole(Controller $controller, $error = '', SecurityException $exception = null)
@@ -195,13 +186,14 @@ class SecurityComponent extends Component
         if (!$this->_config['blackHoleCallback']) {
             $this->_throwException($exception);
         }
+
         return $this->_callback($controller, $this->_config['blackHoleCallback'], [$error, $exception]);
     }
 
     /**
      * Check debug status and throw an Exception based on the existing one
      *
-     * @param \Cake\Controller\Exception\SecurityException $exception Additional debug info describing the cause
+     * @param \Cake\Controller\Exception\SecurityException|null $exception Additional debug info describing the cause
      * @throws \Cake\Network\Exception\BadRequestException
      * @return void
      */
@@ -229,7 +221,7 @@ class SecurityComponent extends Component
         if (isset($actions[0]) && is_array($actions[0])) {
             $actions = $actions[0];
         }
-        $this->config('require' . $method, (empty($actions)) ? ['*'] : $actions);
+        $this->setConfig('require' . $method, empty($actions) ? ['*'] : $actions);
     }
 
     /**
@@ -253,6 +245,7 @@ class SecurityComponent extends Component
                 }
             }
         }
+
         return true;
     }
 
@@ -265,14 +258,15 @@ class SecurityComponent extends Component
      */
     protected function _authRequired(Controller $controller)
     {
+        $request = $controller->request;
         if (is_array($this->_config['requireAuth']) &&
             !empty($this->_config['requireAuth']) &&
-            !empty($this->request->data)
+            $request->getData()
         ) {
             $requireAuth = $this->_config['requireAuth'];
 
-            if (in_array($this->request->params['action'], $requireAuth) || $requireAuth == ['*']) {
-                if (!isset($controller->request->data['_Token'])) {
+            if (in_array($request->getParam('action'), $requireAuth) || $requireAuth == ['*']) {
+                if ($request->getData('_Token') === null) {
                     throw new AuthSecurityException('\'_Token\' was not found in request data.');
                 }
 
@@ -280,23 +274,23 @@ class SecurityComponent extends Component
                     $tData = $this->session->read('_Token');
 
                     if (!empty($tData['allowedControllers']) &&
-                        !in_array($this->request->params['controller'], $tData['allowedControllers'])) {
+                        !in_array($request->getParam('controller'), $tData['allowedControllers'])) {
                         throw new AuthSecurityException(
                             sprintf(
                                 'Controller \'%s\' was not found in allowed controllers: \'%s\'.',
-                                $this->request->params['controller'],
+                                $request->getParam('controller'),
                                 implode(', ', (array)$tData['allowedControllers'])
                             )
                         );
                     }
                     if (!empty($tData['allowedActions']) &&
-                        !in_array($this->request->params['action'], $tData['allowedActions'])
+                        !in_array($request->getParam('action'), $tData['allowedActions'])
                     ) {
                         throw new AuthSecurityException(
                             sprintf(
                                 'Action \'%s::%s\' was not found in allowed actions: \'%s\'.',
-                                $this->request->params['controller'],
-                                $this->request->params['action'],
+                                $request->getParam('controller'),
+                                $request->getParam('action'),
                                 implode(', ', (array)$tData['allowedActions'])
                             )
                         );
@@ -306,6 +300,7 @@ class SecurityComponent extends Component
                 }
             }
         }
+
         return true;
     }
 
@@ -318,9 +313,6 @@ class SecurityComponent extends Component
      */
     protected function _validatePost(Controller $controller)
     {
-        if (empty($controller->request->data)) {
-            return true;
-        }
         $token = $this->_validToken($controller);
         $hashParts = $this->_hashParts($controller);
         $check = Security::hash(implode('', $hashParts), 'sha1');
@@ -346,7 +338,7 @@ class SecurityComponent extends Component
      */
     protected function _validToken(Controller $controller)
     {
-        $check = $controller->request->data;
+        $check = $controller->request->getData();
 
         $message = '\'%s\' was not found in request data.';
         if (!isset($check['_Token'])) {
@@ -369,6 +361,7 @@ class SecurityComponent extends Component
         if (strpos($token, ':')) {
             list($token, ) = explode(':', $token, 2);
         }
+
         return $token;
     }
 
@@ -380,14 +373,14 @@ class SecurityComponent extends Component
      */
     protected function _hashParts(Controller $controller)
     {
-        $fieldList = $this->_fieldsList($controller->request->data);
-        $unlocked = $this->_sortedUnlocked($controller->request->data);
+        $fieldList = $this->_fieldsList($controller->request->getData());
+        $unlocked = $this->_sortedUnlocked($controller->request->getData());
 
         return [
             $controller->request->here(),
             serialize($fieldList),
             $unlocked,
-            Security::salt()
+            Security::getSalt()
         ];
     }
 
@@ -429,7 +422,7 @@ class SecurityComponent extends Component
         }
 
         $unlockedFields = array_unique(
-            array_merge((array)$this->config('disabledFields'), (array)$this->_config['unlockedFields'], $unlocked)
+            array_merge((array)$this->getConfig('disabledFields'), (array)$this->_config['unlockedFields'], $unlocked)
         );
 
         foreach ($fieldList as $i => $key) {
@@ -456,9 +449,9 @@ class SecurityComponent extends Component
         sort($fieldList, SORT_STRING);
         ksort($lockedFields, SORT_STRING);
         $fieldList += $lockedFields;
+
         return $fieldList;
     }
-
 
     /**
      * Get the unlocked string
@@ -482,6 +475,7 @@ class SecurityComponent extends Component
         $unlocked = $this->_unlocked($data);
         $unlocked = explode('|', $unlocked);
         sort($unlocked, SORT_STRING);
+
         return implode('|', $unlocked);
     }
 
@@ -495,7 +489,7 @@ class SecurityComponent extends Component
     protected function _debugPostTokenNotMatching(Controller $controller, $hashParts)
     {
         $messages = [];
-        $expectedParts = json_decode(urldecode($controller->request->data['_Token']['debug']), true);
+        $expectedParts = json_decode(urldecode($controller->request->getData('_Token.debug')), true);
         if (!is_array($expectedParts) || count($expectedParts) !== 3) {
             return 'Invalid security debug token.';
         }
@@ -517,12 +511,12 @@ class SecurityComponent extends Component
             'Missing field \'%s\' in POST data'
         );
         $expectedUnlockedFields = Hash::get($expectedParts, 2);
-        $dataUnlockedFields = Hash::get($hashParts, 2) ?: [];
+        $dataUnlockedFields = Hash::get($hashParts, 2) ?: null;
         if ($dataUnlockedFields) {
             $dataUnlockedFields = explode('|', $dataUnlockedFields);
         }
         $unlockFieldsMessages = $this->_debugCheckFields(
-            $dataUnlockedFields,
+            (array)$dataUnlockedFields,
             $expectedUnlockedFields,
             'Unexpected unlocked field \'%s\' in POST data',
             null,
@@ -530,6 +524,7 @@ class SecurityComponent extends Component
         );
 
         $messages = array_merge($messages, $fieldsMessages, $unlockFieldsMessages);
+
         return implode(', ', $messages);
     }
 
@@ -550,6 +545,7 @@ class SecurityComponent extends Component
         if ($expectedFieldsMessage !== null) {
             $messages[] = $expectedFieldsMessage;
         }
+
         return $messages;
     }
 
@@ -557,15 +553,16 @@ class SecurityComponent extends Component
      * Manually add form tampering prevention token information into the provided
      * request object.
      *
-     * @param \Cake\Network\Request $request The request object to add into.
+     * @param \Cake\Http\ServerRequest $request The request object to add into.
      * @return bool
      */
-    public function generateToken(Request $request)
+    public function generateToken(ServerRequest $request)
     {
-        if (isset($request->params['requested']) && $request->params['requested'] === 1) {
+        if ($request->is('requested')) {
             if ($this->session->check('_Token')) {
                 $request->params['_Token'] = $this->session->read('_Token');
             }
+
             return false;
         }
         $token = [
@@ -578,6 +575,7 @@ class SecurityComponent extends Component
         $request->params['_Token'] = [
             'unlockedFields' => $token['unlockedFields']
         ];
+
         return true;
     }
 
@@ -595,6 +593,7 @@ class SecurityComponent extends Component
         if (!is_callable([$controller, $method])) {
             throw new BadRequestException('The request has been black-holed');
         }
+
         return call_user_func_array([&$controller, $method], empty($params) ? null : $params);
     }
 
@@ -635,7 +634,7 @@ class SecurityComponent extends Component
      *
      * @param array $expectedFields Expected fields
      * @param string $missingMessage Message template
-     * @return string Error message about expected fields
+     * @return string|null Error message about expected fields
      */
     protected function _debugExpectedFields($expectedFields = [], $missingMessage = '')
     {
@@ -651,6 +650,7 @@ class SecurityComponent extends Component
                 $expectedFieldNames[] = $key;
             }
         }
+
         return sprintf($missingMessage, implode(', ', $expectedFieldNames));
     }
 }

@@ -1,16 +1,16 @@
 <?php
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         1.2.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\Cache\Engine;
 
@@ -63,6 +63,7 @@ class XcacheEngine extends CacheEngine
         }
 
         parent::init($config);
+
         return true;
     }
 
@@ -84,6 +85,7 @@ class XcacheEngine extends CacheEngine
         $duration = $this->_config['duration'];
         $expires = time() + $duration;
         xcache_set($key . '_expires', $expires, $duration);
+
         return xcache_set($key, $value, $duration);
     }
 
@@ -109,8 +111,10 @@ class XcacheEngine extends CacheEngine
             if (is_string($value) && !is_numeric($value)) {
                 $value = unserialize($value);
             }
+
             return $value;
         }
+
         return false;
     }
 
@@ -173,6 +177,7 @@ class XcacheEngine extends CacheEngine
             xcache_clear_cache(XC_TYPE_VAR, $i);
         }
         $this->_auth(true);
+
         return true;
     }
 
@@ -194,6 +199,7 @@ class XcacheEngine extends CacheEngine
             }
             $result[] = $group . $value;
         }
+
         return $result;
     }
 

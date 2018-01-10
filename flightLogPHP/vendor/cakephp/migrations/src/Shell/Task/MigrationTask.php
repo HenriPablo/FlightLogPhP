@@ -21,6 +21,9 @@ use Migrations\Util\ColumnParser;
 
 /**
  * Task class for generating migration snapshot files.
+ *
+ * @property \Bake\Shell\Task\BakeTemplateTask $BakeTemplate
+ * @property \Bake\Shell\Task\TestTask $Test
  */
 class MigrationTask extends SimpleMigrationTask
 {
@@ -83,6 +86,7 @@ class MigrationTask extends SimpleMigrationTask
         }
 
         list($action, $table) = $action;
+
         return [
             'plugin' => $this->plugin,
             'pluginPath' => $pluginPath,
@@ -108,16 +112,16 @@ class MigrationTask extends SimpleMigrationTask
     {
         if (preg_match('/^(Create|Drop)(.*)/', $name, $matches)) {
             $action = strtolower($matches[1]) . '_table';
-            $table = Inflector::tableize(Inflector::pluralize($matches[2]));
+            $table = Inflector::underscore($matches[2]);
         } elseif (preg_match('/^(Add).+?(?:To)(.*)/', $name, $matches)) {
             $action = 'add_field';
-            $table = Inflector::tableize(Inflector::pluralize($matches[2]));
+            $table = Inflector::underscore($matches[2]);
         } elseif (preg_match('/^(Remove).+?(?:From)(.*)/', $name, $matches)) {
             $action = 'drop_field';
-            $table = Inflector::tableize(Inflector::pluralize($matches[2]));
+            $table = Inflector::underscore($matches[2]);
         } elseif (preg_match('/^(Alter)(.*)/', $name, $matches)) {
             $action = 'alter_table';
-            $table = Inflector::tableize(Inflector::pluralize($matches[2]));
+            $table = Inflector::underscore($matches[2]);
         } else {
             return [];
         }

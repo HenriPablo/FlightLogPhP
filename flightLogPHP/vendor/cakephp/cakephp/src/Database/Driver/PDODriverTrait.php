@@ -1,22 +1,23 @@
 <?php
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         3.0.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\Database\Driver;
 
 use Cake\Database\Query;
 use Cake\Database\Statement\PDOStatement;
 use PDO;
+use PDOException;
 
 /**
  * PDO driver trait
@@ -27,7 +28,7 @@ trait PDODriverTrait
     /**
      * Instance of PDO.
      *
-     * @var \PDO
+     * @var \PDO|null
      */
     protected $_connection;
 
@@ -47,6 +48,7 @@ trait PDODriverTrait
             $config['flags']
         );
         $this->connection($connection);
+
         return true;
     }
 
@@ -63,6 +65,7 @@ trait PDODriverTrait
         if ($connection !== null) {
             $this->_connection = $connection;
         }
+
         return $this->_connection;
     }
 
@@ -77,7 +80,7 @@ trait PDODriverTrait
     }
 
     /**
-     * Check whether or not the driver is connected.
+     * Checks whether or not the driver is connected.
      *
      * @return bool
      */
@@ -88,12 +91,12 @@ trait PDODriverTrait
         } else {
             try {
                 $connected = $this->_connection->query('SELECT 1');
-            } catch (\PDOException $e) {
+            } catch (PDOException $e) {
                 $connected = false;
             }
         }
-        $this->connected = !empty($connected);
-        return $this->connected;
+
+        return (bool)$connected;
     }
 
     /**
@@ -107,6 +110,7 @@ trait PDODriverTrait
         $this->connect();
         $isObject = $query instanceof Query;
         $statement = $this->_connection->prepare($isObject ? $query->sql() : $query);
+
         return new PDOStatement($statement, $this);
     }
 
@@ -121,6 +125,7 @@ trait PDODriverTrait
         if ($this->_connection->inTransaction()) {
             return true;
         }
+
         return $this->_connection->beginTransaction();
     }
 
@@ -135,6 +140,7 @@ trait PDODriverTrait
         if (!$this->_connection->inTransaction()) {
             return false;
         }
+
         return $this->_connection->commit();
     }
 
@@ -149,6 +155,7 @@ trait PDODriverTrait
         if (!$this->_connection->inTransaction()) {
             return false;
         }
+
         return $this->_connection->rollback();
     }
 
@@ -162,6 +169,7 @@ trait PDODriverTrait
     public function quote($value, $type)
     {
         $this->connect();
+
         return $this->_connection->quote($value, $type);
     }
 
@@ -175,6 +183,7 @@ trait PDODriverTrait
     public function lastInsertId($table = null, $column = null)
     {
         $this->connect();
+
         return $this->_connection->lastInsertId($table);
     }
 
@@ -186,6 +195,7 @@ trait PDODriverTrait
     public function supportsQuoting()
     {
         $this->connect();
+
         return $this->_connection->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'odbc';
     }
 }
