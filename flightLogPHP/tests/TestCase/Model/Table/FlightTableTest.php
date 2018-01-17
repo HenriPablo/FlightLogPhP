@@ -25,11 +25,10 @@ class FlightTableTest extends TestCase
      */
     public $fixtures = [
         'app.flight',
-        'app.aircraft',
-        'app.flight_extended_details',
-        'app.pilot',
-        'app.story',
-        'app.flight_pilot_xref'
+        'app.actingas',
+        'app.flight_actingas',
+        'app.crw',
+        'app.flight_crw'
     ];
 
     /**
@@ -40,7 +39,7 @@ class FlightTableTest extends TestCase
     public function setUp()
     {
         parent::setUp();
-        $config = TableRegistry::exists('Flight') ? [] : ['className' => 'App\Model\Table\FlightTable'];
+        $config = TableRegistry::exists('Flight') ? [] : ['className' => FlightTable::class];
         $this->Flight = TableRegistry::get('Flight', $config);
     }
 
@@ -72,16 +71,6 @@ class FlightTableTest extends TestCase
      * @return void
      */
     public function testValidationDefault()
-    {
-        $this->markTestIncomplete('Not implemented yet.');
-    }
-
-    /**
-     * Test buildRules method
-     *
-     * @return void
-     */
-    public function testBuildRules()
     {
         $this->markTestIncomplete('Not implemented yet.');
     }

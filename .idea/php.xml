@@ -1,8 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="PhpIncludePathManager">
+    <include_path>
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/symfony/console" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/psr/log" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/mobiledetect/mobiledetectlib" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/nikic/php-parser" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/psy/psysh" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/jakub-onderka/php-console-highlighter" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/jakub-onderka/php-console-color" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/dnoegel/php-xdg-base-dir" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/robmorgan/phinx" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/aura/intl" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/cakephp/debug_kit" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/cakephp/bake" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/aura/installer-default" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/jdorn/sql-formatter" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/cakephp/chronos" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/cakephp/plugin-installer" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/symfony/yaml" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/cakephp/migrations" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/composer" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/symfony/config" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/cakephp/cakephp" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/symfony/filesystem" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/symfony/var-dumper" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/symfony/polyfill-mbstring" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/elboletaire/less-cake-plugin" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/oyejorge/less.php" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/zendframework/zend-diactoros" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/symfony/process" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/psr/http-message" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/symfony/finder" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/symfony/debug" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/ajgl/breakpoint-twig-extension" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/wyrihaximus/twig-view" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/twig/twig" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/asm89/twig-cache-extension" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/umpirsky/twig-php-function" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/seld/cli-prompt" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/seld/phar-utils" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/jasny/twig-extensions" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/seld/jsonlint" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/justinrainbow/json-schema" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/aptoma/twig-markdown" />
+      <path value="$PROJECT_DIR$/flightLogPHP/vendor/dereuromark/cakephp-ajax" />
+    </include_path>
+  </component>
   <component name="PhpInterpreters">
     <interpreters>
       <interpreter home="php" id="20670637-bb35-4f50-a216-d8b48ee0c813" name="Interpreter for Composer" debugger_id="php.debugger.XDebug" />
     </interpreters>
+  </component>
+  <component name="PhpProjectSharedConfiguration" php_language_level="5.5.0" />
+  <component name="PhpUnit">
+    <phpunit_settings>
+      <PhpUnitSettings load_method="CUSTOM_LOADER" />
+    </phpunit_settings>
   </component>
 </project>

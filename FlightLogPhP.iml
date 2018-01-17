@@ -19,6 +19,7 @@
       <excludeFolder url="file://$MODULE_DIR$/flightLogPHP/vendor/cakephp/migrations" />
       <excludeFolder url="file://$MODULE_DIR$/flightLogPHP/vendor/cakephp/plugin-installer" />
       <excludeFolder url="file://$MODULE_DIR$/flightLogPHP/vendor/composer" />
+      <excludeFolder url="file://$MODULE_DIR$/flightLogPHP/vendor/dereuromark/cakephp-ajax" />
       <excludeFolder url="file://$MODULE_DIR$/flightLogPHP/vendor/dnoegel/php-xdg-base-dir" />
       <excludeFolder url="file://$MODULE_DIR$/flightLogPHP/vendor/elboletaire/less-cake-plugin" />
       <excludeFolder url="file://$MODULE_DIR$/flightLogPHP/vendor/jakub-onderka/php-console-color" />
@@ -51,96 +52,5 @@
       <excludeFolder url="file://$MODULE_DIR$/flightLogPHP/vendor/zendframework/zend-diactoros" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
-      <library name="PHP" type="php">
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/ajgl/breakpoint-twig-extension" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/aptoma/twig-markdown" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/asm89/twig-cache-extension" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/aura/intl" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/cakephp/bake" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/cakephp/cakephp" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/cakephp/chronos" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/cakephp/debug_kit" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/cakephp/migrations" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/cakephp/plugin-installer" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/composer" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/dnoegel/php-xdg-base-dir" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/elboletaire/less-cake-plugin" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/jakub-onderka/php-console-color" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/jakub-onderka/php-console-highlighter" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/jasny/twig-extensions" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/jdorn/sql-formatter" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/justinrainbow/json-schema" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/mobiledetect/mobiledetectlib" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/nikic/php-parser" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/oyejorge/less.php" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/psr/http-message" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/psr/log" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/psy/psysh" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/robmorgan/phinx" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/seld/cli-prompt" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/seld/jsonlint" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/seld/phar-utils" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/symfony/config" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/symfony/console" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/symfony/debug" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/symfony/filesystem" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/symfony/finder" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/symfony/polyfill-mbstring" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/symfony/process" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/symfony/var-dumper" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/symfony/yaml" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/twig/twig" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/umpirsky/twig-php-function" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/wyrihaximus/twig-view" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/zendframework/zend-diactoros" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/ajgl/breakpoint-twig-extension" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/aptoma/twig-markdown" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/asm89/twig-cache-extension" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/aura/intl" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/cakephp/bake" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/cakephp/cakephp" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/cakephp/chronos" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/cakephp/debug_kit" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/cakephp/migrations" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/cakephp/plugin-installer" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/composer" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/dnoegel/php-xdg-base-dir" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/elboletaire/less-cake-plugin" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/jakub-onderka/php-console-color" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/jakub-onderka/php-console-highlighter" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/jasny/twig-extensions" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/jdorn/sql-formatter" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/justinrainbow/json-schema" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/mobiledetect/mobiledetectlib" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/nikic/php-parser" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/oyejorge/less.php" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/psr/http-message" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/psr/log" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/psy/psysh" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/robmorgan/phinx" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/seld/cli-prompt" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/seld/jsonlint" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/seld/phar-utils" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/symfony/config" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/symfony/console" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/symfony/debug" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/symfony/filesystem" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/symfony/finder" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/symfony/polyfill-mbstring" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/symfony/process" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/symfony/var-dumper" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/symfony/yaml" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/twig/twig" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/umpirsky/twig-php-function" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/wyrihaximus/twig-view" />
-          <root url="file://$MODULE_DIR$/flightLogPHP/vendor/zendframework/zend-diactoros" />
-        </SOURCES>
-      </library>
-    </orderEntry>
   </component>
 </module>

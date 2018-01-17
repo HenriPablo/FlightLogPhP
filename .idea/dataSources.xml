@@ -13,5 +13,11 @@
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql://localhost:5432/flight_log_v2</jdbc-url>
     </data-source>
+    <data-source source="LOCAL" name="Flight Log v3" uuid="00e20c8d-7a11-4ce4-b8e7-48d905e1d4b2">
+      <driver-ref>79df554c-39f9-44a4-91db-a134bd9f7fa3</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://localhost:5432/flight_log_v3</jdbc-url>
+    </data-source>
   </component>
 </project>

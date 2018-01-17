@@ -46,5 +46,6 @@ return array(
     'App\\Test\\' => array($baseDir . '/tests'),
     'App\\' => array($baseDir . '/src'),
     'Ajgl\\Twig\\Extension\\' => array($vendorDir . '/ajgl/breakpoint-twig-extension/src'),
+    'Ajax\\' => array($vendorDir . '/dereuromark/cakephp-ajax/src'),
     '' => array($vendorDir . '/asm89/twig-cache-extension/lib'),
 );

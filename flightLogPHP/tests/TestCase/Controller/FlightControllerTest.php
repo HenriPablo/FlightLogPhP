@@ -17,11 +17,10 @@ class FlightControllerTest extends IntegrationTestCase
      */
     public $fixtures = [
         'app.flight',
-        'app.aircraft',
-        'app.flight_extended_details',
-        'app.pilot',
-        'app.story',
-        'app.flight_pilot_xref'
+        'app.actingas',
+        'app.flight_actingas',
+        'app.crw',
+        'app.flight_crw'
     ];
 
     /**

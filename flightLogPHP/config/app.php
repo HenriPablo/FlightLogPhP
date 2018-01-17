@@ -253,7 +253,7 @@ return [
             'port' => 5432,
             'username' => 'tomekpilot',
             'password' => 'solaris',
-            'database' => 'flight_log_v2',
+            'database' => 'flight_log_v3',
             //'encoding' => 'utf8',
             'timezone' => 'UTC',
             'flags' => [],
