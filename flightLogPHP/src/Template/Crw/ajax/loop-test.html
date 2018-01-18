@@ -1,0 +1,79 @@
+<html>
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+</head>
+
+<body>
+<form>
+    <select id="crw-ids">
+
+    </select>
+</form>
+</body>
+
+</html>
+
+<script>
+    $(document).ready( function(){
+
+        var i = 0;
+        var $x = {
+            "error":null,
+            "content":"",
+            "_message":null,
+            "crw":[
+                {
+                    "title":"Misa",
+                    "id":4,
+                    "_matchingData":
+                        {
+                        "Actingas":
+                            {
+                                "title":"CFII",
+                                "id":3
+                            },
+                        "CrwActingas":
+                            {
+                                "crw_id":4,
+                                "actingas_id":3,
+                                "id":5
+                            }
+                        }
+                },
+                {
+                    "title":"Cecily",
+                    "id":5,
+                    "_matchingData":
+                        {
+                            "Actingas":
+                                {
+                                    "title":"CFII",
+                                    "id":3
+                                },
+                            "CrwActingas":
+                                {
+                                    "crw_id":5,
+                                    "actingas_id":3,
+                                    "id":7
+                                }
+                        }
+                }
+                ]
+        };
+
+        var $crw = $('#crw-ids');
+        $crw.empty();
+
+
+
+
+        for ( ; i < $x.crw.length; i++ ){
+            console.log( $x.crw[i]['title']);
+
+            /** reference: https://www.codebyamir.com/blog/populate-a-select-dropdown-list-with-json */
+
+            $crw.append( $('<option/>').attr('value', $x.crw[i]['id'] ).text( $x.crw[i]['title'] ));
+        }
+
+    });
+</script>
