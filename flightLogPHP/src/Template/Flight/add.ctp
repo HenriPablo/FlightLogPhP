@@ -28,3 +28,42 @@
     <?= $this->Form->button(__('Submit')) ?>
     <?= $this->Form->end() ?>
 </div>
+
+<?php
+//echo Helper::url(array('action' => 'crwbyajax', 'ext' => 'json'));
+$url =  $this->Url->build([
+    "controller" => "Crw",
+    "action" => "crwbyajax",
+    "_ext" => "json",
+]);
+?>
+<script>
+    $(document).ready( function () {
+        $("#actingas-ids").change( function () {
+            var selectedValue = $(this).val();
+            var targeturl = '<?=$url?>' + '?id=' + selectedValue;
+            $.ajax({
+                type: 'get',
+                url: targeturl,
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+                },
+                success: function(response) {
+                    console.dir( response);
+                    if (response.error) {
+                        alert(response.error);
+                        console.log(response.error);
+                    }
+                    if (response.content) {
+                        $('#crw-ids').html(response.content);
+                        console.dir( response.content)
+                    }
+                },
+                error: function(e) {
+                    alert("An error occurred: " + e.responseText.message);
+                    console.log(e);
+                }
+            });
+        });/* end change */
+    });/* end doc ready */
+</script>

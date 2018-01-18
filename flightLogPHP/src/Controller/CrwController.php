@@ -34,14 +34,34 @@ class CrwController extends AppController
     }
 
     public function crwbyajax(){
-        //
-        //
+        $id = $this->request->query('id');
 
-        //$content = ['id' => 1, 'title' => 'title'];
+
+        if (!$id) {
+            //throw new NotFoundException();
+        }
+        //$this->viewClass = 'Tools.Ajax';
+
+        //$this->set('articles', $this->paginate());
+        // Specify which view vars JsonView should serialize.
+        //$this->set('_serialize', ['articles']);
+
+        //$this->loadModel('Data.Actingas');
+        //$crw = $this->Crw->getListByCrw($id);
+
+        //$crw = $this->paginate( $this->Crw );
+//        $query = $this->Crw->find()->matching('Actingas.id', function ($q) use ($id) {
+//            return $q->where(['Actingas.id' => $id ]);
+//        });
+
+        $crw = $this->Crw->getListByActingas($id);
+        //die( $crw );
+
+        //$this->set('crw', $crw);
+        //die(  );
+
         $this->set(compact('crw'));
         $this->set('_serialize', ['crw']);
-        //return json_encode( compact('crw'));
-        die('oh shit');
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Model\Table;
 use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
+use Cake\ORM\TableRegistry;
 use Cake\Validation\Validator;
 
 /**
@@ -67,5 +68,30 @@ class CrwTable extends Table
             ->allowEmpty('id', 'create');
 
         return $validator;
+    }
+
+    public function getListByActingas( $id )
+    {
+
+        //$crw = TableRegistry::get('Crw');
+//        return $q->selct(['id', 'id'] );
+//    } );        $this->find()->contain('Actingas', function ($q){
+//
+
+
+//        $crw = $this->get($id, [
+//            'contain' => ['Actingas']
+//        ]);
+
+//        $query = $this->find('all', [
+//            'conditions' => ['Actingas.id >', $id ]
+//        ]);
+
+
+        $query = $this->find();
+        $query->matching('Actingas', function ($q) use ($id) {
+            return $q->where(['Actingas.id' => $id ]);
+        });
+        return $query->toArray();
     }
 }
