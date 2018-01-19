@@ -92,6 +92,6 @@ class CrwTable extends Table
         $query->matching('Actingas', function ($q) use ($id) {
             return $q->where(['Actingas.id' => $id ]);
         });
-        return $query->toArray();
+        return $query->hydrate(false)->toArray();
     }
 }

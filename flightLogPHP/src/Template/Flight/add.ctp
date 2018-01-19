@@ -39,6 +39,7 @@ $url =  $this->Url->build([
 ?>
 <script>
     $(document).ready( function () {
+        var $crw = $('#crw-ids');
         $("#actingas-ids").change( function () {
             var selectedValue = $(this).val();
             var targeturl = '<?=$url?>' + '?id=' + selectedValue;
@@ -49,14 +50,16 @@ $url =  $this->Url->build([
                     xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
                 },
                 success: function(response) {
-                    console.dir( response);
                     if (response.error) {
                         alert(response.error);
                         console.log(response.error);
                     }
-                    if (response.content) {
-                        $('#crw-ids').html(response.content);
-                        console.dir( response.content)
+                    if (response.crw) {
+                        $crw.empty();
+                        for ( var i = 0; i < response.crw.length; i++ ){
+                            /** reference: https://www.codebyamir.com/blog/populate-a-select-dropdown-list-with-json */
+                            $crw.append( $('<option></option>').attr('value', response.crw[i]['id'] ).text( response.crw[i]['title'] ));
+                        }
                     }
                 },
                 error: function(e) {
