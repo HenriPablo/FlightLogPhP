@@ -76,6 +76,11 @@ class FlightController extends AppController
             'contain' => ['Actingas', 'Crw']
         ]);
         if ($this->request->is(['patch', 'post', 'put'])) {
+
+            //var_dump( $this->request->getData() );
+            //phpinfo();
+            //die();
+
             $flight = $this->Flight->patchEntity($flight, $this->request->getData());
             if ($this->Flight->save($flight)) {
                 $this->Flash->success(__('The flight has been saved.'));
