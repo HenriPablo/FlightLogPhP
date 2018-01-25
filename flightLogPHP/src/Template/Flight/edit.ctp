@@ -34,7 +34,7 @@
         <?php
             echo $this->Form->control('date');
             echo $this->Form->control('total_duration_of_flight');
-            echo $this->Form->control('actingas._ids', ['options' => $actingas]);
+            echo $this->Form->control('actingas._ids', ['options' => $actingas, 'multiple' => false ]);
             echo $this->Form->control('crw._ids', ['options' => $crw]);
         ?>
     </fieldset>
@@ -45,9 +45,7 @@
     </div>
 
 
-
-
-
+    <!--
     <div class="input select">
         <label for="actingas-ids">Actingas</label>
         <input type="hidden" name="actingas[_ids]" value="">
@@ -66,11 +64,12 @@
         <select name="crw[_ids][]" multiple="multiple" id="crw-ids-0">
             <option value="2">Rob</option>
             <option value="3">Tim</option>
-            <option value="4">Misa</option>
-            <option value="5">Cecily</option>
+            <option value="4">Bob</option>
+            <option value="5">Rog</option>
             <option value="6">Bart</option>
         </select>
     </div>
+    -->
 
 </div>
 
