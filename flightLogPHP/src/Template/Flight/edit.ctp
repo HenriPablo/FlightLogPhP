@@ -36,7 +36,7 @@
             echo $this->Form->control('total_duration_of_flight');
 
             echo "<div style='background: yellow'>";
-            echo $this->Form->control('actingas._ids', ['options' => $actingas,  'multiple' => 'false' ]);
+            echo $this->Form->control('actingas._ids', ['options' => $actingas, 'type' => 'select',  'multiple' => 'false' ]);
             echo "</div>";
 
             echo $this->Form->control('crw._ids', ['options' => $crw]);

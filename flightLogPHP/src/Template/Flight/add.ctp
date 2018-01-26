@@ -22,7 +22,7 @@
             echo $this->Form->control('date');
             echo $this->Form->control('total_duration_of_flight');
             //echo $this->Form->control('actingas._ids', ['options' => $actingas]);
-            echo $this->Form->control('actingas._ids', ['options' => $actingas,  'multiple' => 'false' ]);
+            echo $this->Form->control('actingas._ids', ['options' => $actingas, 'type' => 'select', 'multiple' => 'false' ]);
             echo $this->Form->control('crw._ids', ['options' => $crw]);
         ?>
     </fieldset>
